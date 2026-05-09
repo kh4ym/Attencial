@@ -1,0 +1,6 @@
+@Attencial.API_HostAddress = http://localhost:5158
+
+GET {{Attencial.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
