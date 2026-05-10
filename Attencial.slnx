@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="Attencial.API/Attencial.API.csproj" />
-  <Project Path="Attencial.Client/Attencial.Client.csproj" />
+  <Project Path="Attencial.Client/Attencial.Client.csproj" Id="a7b5fd40-a623-4c71-a626-cd6e0de2f512" />
   <Project Path="Attencial.Shared/Attencial.Shared.csproj" />
 </Solution>
