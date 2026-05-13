@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Attencial.Shared.Dtos
+namespace Attencial.Shared.Dtos;
+
+public record LoginResponse
 {
-    internal class LoginResponse
-    {
-    }
+    public string Token { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public string Role { get; init; } = string.Empty;
 }

@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Attencial.Shared.Enums
+namespace Attencial.Shared.Enums;
+
+public enum UserRole
 {
-    internal class UserRole
-    {
-    }
+    Student,
+    Professor,
+    Admin
 }
