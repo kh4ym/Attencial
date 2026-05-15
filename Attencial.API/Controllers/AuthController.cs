@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Attencial.API.Data;
+using Attencial.API.Models;
+using Attencial.Shared.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Attencial.API.Data;
-using Attencial.API.Models;
-using Attencial.Shared.Dtos;
 
 namespace Attencial.API.Controllers;
 
@@ -23,10 +23,9 @@ public class AuthController : ControllerBase
         _context = context;
         _config = config;
     }
-}
 
-
-[HttpPost("register")]
+    // POST /api/auth/register
+    [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] LoginRequest request)
     {
         // Check if email already exists
@@ -42,10 +41,9 @@ public class AuthController : ControllerBase
             });
         }
 
-        // Hash the password
+        // Hash the password — never store plain text passwords
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        // Create the user
         var user = new User
         {
             Email = request.Email,
@@ -62,3 +60,80 @@ public class AuthController : ControllerBase
             Message = "Registration successful"
         });
     }
+
+    // POST /api/auth/login
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        // Find user by email
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+        // Verify password against stored hash
+        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            return Unauthorized(new ApiResponse<string>
+            {
+                Success = false,
+                Message = "Invalid email or password"
+            });
+        }
+
+        // Build the JWT token
+        var token = GenerateJwtToken(user);
+
+        return Ok(new ApiResponse<LoginResponse>
+        {
+            Success = true,
+            Message = "Login successful",
+            Data = new LoginResponse
+            {
+                Token = token,
+                Email = user.Email,
+                Role = user.Role
+            }
+        });
+    }
+
+    // GET /api/auth/me  — protected endpoint
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = new { email, role }
+        });
+    }
+
+    // Private helper — builds the JWT token
+    private string GenerateJwtToken(User user)
+    {
+        var jwtSettings = _config.GetSection("JwtSettings");
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!));
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(
+                double.Parse(jwtSettings["ExpiryMinutes"]!)),
+            signingCredentials: new SigningCredentials(
+                key, SecurityAlgorithms.HmacSha256)
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
