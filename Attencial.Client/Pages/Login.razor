@@ -1,0 +1,66 @@
+﻿@page "/login"
+@using Attencial.Shared.Dtos
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="error">@errorMessage</div>
+}
+
+<form @onsubmit="HandleLogin">
+    <div>
+        <label>Email</label>
+        <input type="email" @bind="email" />
+    </div>
+    <div>
+        <label>Password</label>
+        <input type="password" @bind="password" />
+    </div>
+    <button type="submit" disabled="@isLoading">
+        @(isLoading ? "Logging in..." : "Login")
+    </button>
+</form>
+
+@code {
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        var request = new LoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+
+        var response = await Http.PostAsJsonAsync("api/auth/login", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content
+                .ReadFromJsonAsync<ApiResponse<LoginResponse>>();
+
+            if (result?.Data?.Token is not null)
+            {
+                await JS.InvokeVoidAsync(
+                    "authStorage.setToken", result.Data.Token);
+                Nav.NavigateTo("/");
+            }
+        }
+        else
+        {
+            errorMessage = "Invalid email or password";
+        }
+
+        isLoading = false;
+    }
+}

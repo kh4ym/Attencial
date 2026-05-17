@@ -1,0 +1,31 @@
+﻿@page "/dashboard"
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+@if (!isAuthorized)
+{
+    <p>Redirecting to login...</p>
+}
+else
+{
+    <h3>Dashboard</h3>
+    <p>Welcome! You are authenticated.</p>
+}
+
+@code {
+    private bool isAuthorized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>(
+            "authStorage.getToken");
+
+        if (string.IsNullOrEmpty(token))
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        isAuthorized = true;
+    }
+}
