@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    // POST /api/auth/login
+    // POST /api/auth/login.
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
