@@ -16,8 +16,4 @@
     <ProjectReference Include="..\Attencial.Shared\Attencial.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>
