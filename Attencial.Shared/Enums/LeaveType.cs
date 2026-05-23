@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Attencial.Shared.Enums
 {
-    internal class LeaveType
+    public enum LeaveType
     {
+        Casual,
+        Sick,
+        Annual,
+        Other
     }
 }

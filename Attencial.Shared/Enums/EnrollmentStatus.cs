@@ -4,7 +4,10 @@ using System.Text;
 
 namespace Attencial.Shared.Enums
 {
-    internal class EnrollmentStatus
+    public enum EnrollmentStatus
     {
+        Pending,
+        Trained,
+        Failed
     }
 }
