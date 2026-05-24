@@ -1,6 +1,5 @@
-﻿using Attencial.API.Data;
+using Attencial.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Attencial.API.Controllers;
 
@@ -8,17 +7,17 @@ namespace Attencial.API.Controllers;
 [Route("api/[controller]")]
 public class TestController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IStudentRepository _studentRepo;
 
-    public TestController(AppDbContext db)
+    public TestController(IStudentRepository studentRepo)
     {
-        _db = db;
+        _studentRepo = studentRepo;
     }
 
-    [HttpGet("users")]
-    public async Task<IActionResult> GetUsers()
+    [HttpGet("students")]
+    public async Task<IActionResult> GetStudents()
     {
-        var users = await _db.Users.ToListAsync();
-        return Ok(users);
+        var students = await _studentRepo.GetAllAsync();
+        return Ok(students);
     }
 }

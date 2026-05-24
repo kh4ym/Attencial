@@ -1,4 +1,4 @@
-﻿using Attencial.API.Data;
+using Attencial.API.Data;
 using Attencial.API.Models;
 using Attencial.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
 
     // POST /api/auth/register
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] LoginRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         // Check if email already exists
         var existingUser = await _context.Users
@@ -53,6 +53,20 @@ public class AuthController : ControllerBase
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
+        // If registering as a Student, also create the Student profile
+        if (request.Role.Equals("Student", StringComparison.OrdinalIgnoreCase))
+        {
+            var student = new Student
+            {
+                UserId = user.Id,
+                FullName = request.FullName,
+                RollNumber = request.RollNumber,
+                EnrollmentStatus = "Pending"
+            };
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+        }
 
         return Ok(new ApiResponse<string>
         {

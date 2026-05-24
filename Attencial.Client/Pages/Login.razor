@@ -1,35 +1,90 @@
-﻿@page "/login"
+@page "/login"
 @using Attencial.Shared.Dtos
 @inject HttpClient Http
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<h3>Login</h3>
+<PageTitle>Log In — Attencial</PageTitle>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="error">@errorMessage</div>
-}
+<div class="auth-page-bg">
+    <!-- Logo Header -->
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-4 animate-fade-in">
+        <i class="bi bi-eye-fill" style="color: var(--colors-primary); font-size: 1.8rem;"></i>
+        <span class="fs-4 fw-bold" style="color: var(--colors-ink); font-family: 'Manrope', sans-serif; letter-spacing: -0.04em;">
+            Attencial
+        </span>
+    </div>
 
-<form @onsubmit="HandleLogin">
-    <div>
-        <label>Email</label>
-        <input type="email" @bind="email" />
+    <!-- Login Card -->
+    <div class="auth-card animate-fade-in">
+        <h2 class="auth-title">Log in</h2>
+        <p class="auth-subtitle">Log in to manage your attendance and courses.</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert-glass mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span class="small text-start">@errorMessage</span>
+            </div>
+        }
+
+        <form @onsubmit="HandleLogin">
+            <!-- Email Input -->
+            <div class="auth-input-wrapper">
+                <i class="bi bi-envelope auth-input-icon"></i>
+                <input type="email" class="auth-input" placeholder="Enter your email" @bind="email" required />
+            </div>
+
+            <!-- Password Input -->
+            <div class="auth-input-wrapper">
+                <i class="bi bi-lock auth-input-icon"></i>
+                <input type="@(showPassword ? "text" : "password")" class="auth-input" placeholder="Enter your password" 
+                       @bind="password" required />
+                <button type="button" class="auth-toggle-pwd" @onclick="TogglePasswordVisibility">
+                    @(showPassword ? "Hide" : "Show")
+                </button>
+            </div>
+
+            <!-- Remember Me -->
+            <label class="auth-checkbox-wrapper">
+                <input type="checkbox" @bind="rememberMe" />
+                <span>Remember me</span>
+            </label>
+
+            <!-- Sign In Button -->
+            <button type="submit" class="auth-btn" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <span>Sign in</span>
+                }
+            </button>
+        </form>
     </div>
-    <div>
-        <label>Password</label>
-        <input type="password" @bind="password" />
-    </div>
-    <button type="submit" disabled="@isLoading">
-        @(isLoading ? "Logging in..." : "Login")
-    </button>
-</form>
+
+    <!-- Redirect Links Outside Card -->
+    <p class="auth-footer-link animate-fade-in delay-1">
+        Don’t have an account yet? <a href="register">Sign up</a>
+    </p>
+    <a href="login#" class="auth-forgot-link animate-fade-in delay-2">Forgot password?</a>
+</div>
 
 @code {
     private string email = string.Empty;
     private string password = string.Empty;
+    private bool rememberMe = false;
+    private bool showPassword = false;
+    
     private string errorMessage = string.Empty;
     private bool isLoading = false;
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
 
     private async Task HandleLogin()
     {
@@ -42,25 +97,36 @@
             Password = password
         };
 
-        var response = await Http.PostAsJsonAsync("api/auth/login", request);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var result = await response.Content
-                .ReadFromJsonAsync<ApiResponse<LoginResponse>>();
+            var response = await Http.PostAsJsonAsync("api/auth/login", request);
 
-            if (result?.Data?.Token is not null)
+            if (response.IsSuccessStatusCode)
             {
-                await JS.InvokeVoidAsync(
-                    "authStorage.setToken", result.Data.Token);
-                Nav.NavigateTo("/");
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResponse>>();
+
+                if (result?.Data?.Token is not null)
+                {
+                    await JS.InvokeVoidAsync("authStorage.setToken", result.Data.Token);
+                    Nav.NavigateTo("", true); // Reload page to update navbar state
+                }
+                else
+                {
+                    errorMessage = "Login succeeded but token was missing.";
+                }
+            }
+            else
+            {
+                errorMessage = "Invalid email or password. Please try again.";
             }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "Invalid email or password";
+            errorMessage = $"Connection error: {ex.Message}";
         }
-
-        isLoading = false;
+        finally
+        {
+            isLoading = false;
+        }
     }
 }

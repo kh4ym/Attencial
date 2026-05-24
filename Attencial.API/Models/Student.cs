@@ -6,7 +6,7 @@ public class Student
     public int UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string RollNumber { get; set; } = string.Empty;
-    public string? AzurePersonId { get; set; }
+    public string? RekognitionExternalId { get; set; }
     public string EnrollmentStatus { get; set; } = "Pending";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

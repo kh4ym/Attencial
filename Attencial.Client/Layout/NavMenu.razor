@@ -1,33 +1,78 @@
-﻿@inject IJSRuntime JS
+@inject IJSRuntime JS
 @inject NavigationManager Nav
+@implements IDisposable
 
-<nav>
-    <a href="/">Home</a>
-
-    @if (isLoggedIn)
-    {
-        <button @onclick="Logout">Logout</button>
-    }
-    else
-    {
-        <a href="/login">Login</a>
-    }
-</nav>
+<header class="navbar-glass">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a href="/" class="navbar-brand-custom">
+            <i class="bi bi-eye-fill"></i> Attencial
+        </a>
+        
+        <nav class="d-flex align-items-center gap-2">
+            <a href="" class="nav-link-custom @GetActiveStyle("")">
+                <i class="bi bi-house-door-fill"></i> Home
+            </a>
+            
+            @if (isLoggedIn)
+            {
+                <a href="dashboard" class="nav-link-custom @GetActiveStyle("dashboard")">
+                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                </a>
+                <a href="enroll" class="nav-link-custom @GetActiveStyle("enroll")">
+                    <i class="bi bi-person-bounding-box"></i> Enroll Face
+                </a>
+                <button @onclick="Logout" class="btn-premium-outline ms-2">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            }
+            else
+            {
+                <a href="login" class="nav-link-custom @GetActiveStyle("login")">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </a>
+                <a href="register" class="btn-premium text-decoration-none">
+                    <i class="bi bi-person-plus-fill"></i> Sign Up
+                </a>
+            }
+        </nav>
+    </div>
+</header>
 
 @code {
     private bool isLoggedIn = false;
+    private string currentUri = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        var token = await JS.InvokeAsync<string>(
-            "authStorage.getToken");
-        isLoggedIn = !string.IsNullOrEmpty(token);
+        currentUri = Nav.ToBaseRelativePath(Nav.Uri);
+        Nav.LocationChanged += OnLocationChanged;
+
+        var token = await JS.InvokeAsync<string>("authStorage.getToken");
+        isLoggedIn = !string.IsNullOrEmpty(token) && token != "null" && token != "undefined";
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        currentUri = Nav.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    private string GetActiveStyle(string path)
+    {
+        // Remove trailing query parameters if any for active state matching
+        var cleanUri = currentUri.Split('?')[0];
+        return cleanUri.Equals(path, StringComparison.OrdinalIgnoreCase) ? "active" : "";
     }
 
     private async Task Logout()
     {
         await JS.InvokeVoidAsync("authStorage.removeToken");
         isLoggedIn = false;
-        Nav.NavigateTo("/login");
+        Nav.NavigateTo("", true); // Force reload to refresh navbar state cleanly
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
     }
 }

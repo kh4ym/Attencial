@@ -1,16 +1,41 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="app-container">
+    @if (!isAuthPage)
+    {
         <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+    }
+    
+    <main class="@(isAuthPage ? "" : "main-content")">
+        @Body
     </main>
 </div>
+
+@code {
+    private bool isAuthPage = false;
+
+    protected override void OnInitialized()
+    {
+        UpdatePageType(Nav.Uri);
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        UpdatePageType(e.Location);
+        StateHasChanged();
+    }
+
+    private void UpdatePageType(string uri)
+    {
+        var relativePath = Nav.ToBaseRelativePath(uri).Split('?')[0].ToLower();
+        isAuthPage = relativePath == "login" || relativePath == "register";
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

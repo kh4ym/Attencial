@@ -1,4 +1,6 @@
 using Attencial.API.Data;
+using Attencial.API.Repositories;
+using Attencial.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +16,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient", policy =>
     {
-        policy.WithOrigins("http://localhost:7251", "https://localhost:7251")
+        policy.WithOrigins(
+                  "http://localhost:5058",
+                  "https://localhost:7251",
+                  "http://localhost:7251"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -23,6 +29,13 @@ builder.Services.AddCors(options =>
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repositories
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+
+// Services
+builder.Services.AddSingleton<IFaceService, FaceService>();
 
 // JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
