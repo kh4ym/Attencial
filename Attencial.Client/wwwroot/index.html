@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Attencial.Client</title>
+    <title>Attencial</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -20,11 +20,17 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="loading-screen">
+            <div class="loading-logo">
+                <i class="bi bi-eye-fill" style="color: #e60023; font-size: 2.5rem; display: block; margin-bottom: 8px;"></i>
+                <span style="font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.04em; color: #000;">Attencial</span>
+            </div>
+            <svg class="loading-progress">
+                <circle r="40%" cx="50%" cy="50%" />
+                <circle r="40%" cx="50%" cy="50%" />
+            </svg>
+            <div class="loading-progress-text">Loading your experience...</div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
@@ -35,6 +41,7 @@
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script src="js/auth.js"></script>
     <script src="js/camera.js"></script>
+    <script src="js/animations.js"></script>
 </body>
 
 </html>

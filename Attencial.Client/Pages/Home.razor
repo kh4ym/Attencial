@@ -4,46 +4,84 @@
 
 <PageTitle>Attencial — Facial Recognition Attendance System</PageTitle>
 
-<div class="container py-5 animate-fade-in">
-    <!-- Hero Section -->
-    <div class="hero-section text-center mb-5">
-        <h1 class="display-xl mb-3">Smart Attendance,<br />Reimagined.</h1>
-        <p class="fs-5 text-secondary max-width-600 mx-auto mb-4">
-            A premium, zero-fraud attendance marking system powered by AWS Rekognition. Fast, secure, and completely automated.
+@* Morphing background blobs *@
+<div class="morphing-blob morphing-blob-1"></div>
+<div class="morphing-blob morphing-blob-2"></div>
+
+@* Particle canvas *@
+<canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+<div class="container py-5" style="position: relative; z-index: 1;">
+    @* Hero Section *@
+    <section class="hero-section text-center mb-5">
+        @* Floating orbs *@
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+
+        @* Animated badge *@
+        <div class="d-inline-flex align-items-center gap-2 mb-3 animate-fade-in"
+             style="background: rgba(230, 0, 35, 0.06); color: var(--colors-primary); padding: 6px 16px; border-radius: var(--rounded-full); font-size: 13px; font-weight: 700;">
+            <span class="live-pulse"></span>
+            Powered by AWS Rekognition
+        </div>
+
+        @* Headline *@
+        <h1 class="display-xl mb-3 animate-fade-in delay-1">
+            <span class="hero-gradient-text">Smart Attendance,</span><br />
+            <span style="position: relative;">
+                Reimagined.
+                <svg width="100%" height="12" viewBox="0 0 200 12" preserveAspectRatio="none"
+                     style="position: absolute; bottom: -8px; left: 0; overflow: visible;">
+                    <path d="M 0 6 Q 50 0, 100 6 Q 150 12, 200 6"
+                          fill="none" stroke="var(--colors-primary)" stroke-width="3"
+                          stroke-linecap="round" opacity="0.4"
+                          style="stroke-dasharray: 300; stroke-dashoffset: 300; animation: borderDraw 1.5s 0.5s var(--ease-out-expo) forwards;" />
+                </svg>
+            </span>
+        </h1>
+
+        <p class="fs-5 max-width-600 mx-auto mb-4 animate-fade-in delay-2"
+           style="color: var(--colors-mute); max-width: 600px;">
+            <span id="heroSubtitle">A premium, zero-fraud attendance marking system powered by AWS Rekognition. Fast, secure, and completely automated.</span>
         </p>
 
-        <div class="d-flex justify-content-center gap-3">
+        <div class="d-flex justify-content-center gap-3 animate-fade-in delay-3">
             @if (isLoggedIn)
             {
-                <a href="dashboard" class="btn-premium px-4 text-decoration-none">
+                <a href="dashboard" class="btn-premium px-4 text-decoration-none" style="font-size: 16px; height: 52px; padding: 0 28px;">
                     <i class="bi bi-speedometer2"></i> Open Dashboard
                 </a>
-                <a href="enroll" class="btn-premium-outline px-4 text-decoration-none">
+                <a href="enroll" class="btn-premium-outline px-4 text-decoration-none" style="font-size: 16px; height: 52px; padding: 0 28px;">
                     <i class="bi bi-person-bounding-box"></i> Face Enrollment
                 </a>
             }
             else
             {
-                <a href="register" class="btn-premium px-4 text-decoration-none">
+                <a href="register" class="btn-premium px-4 text-decoration-none" style="font-size: 16px; height: 52px; padding: 0 28px;">
                     <i class="bi bi-rocket-takeoff-fill"></i> Get Started
                 </a>
-                <a href="login" class="btn-premium-outline px-4 text-decoration-none">
+                <a href="login" class="btn-premium-outline px-4 text-decoration-none" style="font-size: 16px; height: 52px; padding: 0 28px;">
                     <i class="bi bi-box-arrow-in-right"></i> Log In
                 </a>
             }
         </div>
-    </div>
+    </section>
 
-    <!-- Alternating Features Grid -->
+    @* Features Grid with scroll reveals *@
     <div class="mt-5 pt-4">
-        <!-- Feature 1: AWS Rekognition -->
-        <div class="row align-items-center mb-5 g-4">
+
+        @* Feature 1: AWS Rekognition *@
+        <div class="reveal-on-scroll row align-items-center mb-5 g-4">
             <div class="col-md-6 order-md-1">
-                <div class="p-2 bg-white rounded-lg" style="border-radius: var(--rounded-lg);">
-                    <img src="images/aws_recognition.png" class="img-fluid" style="border-radius: var(--rounded-lg); width: 100%; object-fit: cover;" alt="AWS Rekognition Scan" />
+                <div class="tilt-card bg-white" style="border-radius: var(--rounded-lg);">
+                    <div class="card-glare" style="border-radius: var(--rounded-lg);"></div>
+                    <div class="p-2">
+                        <img src="images/aws_recognition.png" class="img-fluid" style="border-radius: var(--rounded-md); width: 100%; object-fit: cover;" alt="AWS Rekognition Scan" />
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6 order-md-2">
+            <div class="col-md-6 order-md-2 stagger-child">
                 <div class="feature-card-soft">
                     <div class="feature-icon-wrapper">
                         <i class="bi bi-shield-check"></i>
@@ -56,14 +94,17 @@
             </div>
         </div>
 
-        <!-- Feature 2: Anti-Spoofing -->
-        <div class="row align-items-center mb-5 g-4">
+        @* Feature 2: Anti-Spoofing *@
+        <div class="reveal-on-scroll row align-items-center mb-5 g-4">
             <div class="col-md-6 order-md-2">
-                <div class="p-2 bg-white rounded-lg" style="border-radius: var(--rounded-lg);">
-                    <img src="images/anti_spoofing.png" class="img-fluid" style="border-radius: var(--rounded-lg); width: 100%; object-fit: cover;" alt="Anti-Spoofing Profiles" />
+                <div class="tilt-card bg-white" style="border-radius: var(--rounded-lg);">
+                    <div class="card-glare" style="border-radius: var(--rounded-lg);"></div>
+                    <div class="p-2">
+                        <img src="images/anti_spoofing.png" class="img-fluid" style="border-radius: var(--rounded-md); width: 100%; object-fit: cover;" alt="Anti-Spoofing Profiles" />
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6 order-md-1">
+            <div class="col-md-6 order-md-1 stagger-child">
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <i class="bi bi-camera-fill"></i>
@@ -76,14 +117,17 @@
             </div>
         </div>
 
-        <!-- Feature 3: Instant Sync -->
-        <div class="row align-items-center mb-5 g-4">
+        @* Feature 3: Instant Sync *@
+        <div class="reveal-on-scroll row align-items-center mb-5 g-4">
             <div class="col-md-6 order-md-1">
-                <div class="p-2 bg-white rounded-lg" style="border-radius: var(--rounded-lg);">
-                    <img src="images/instant_sync.png" class="img-fluid" style="border-radius: var(--rounded-lg); width: 100%; object-fit: cover;" alt="Instant Cloud Sync" />
+                <div class="tilt-card bg-white" style="border-radius: var(--rounded-lg);">
+                    <div class="card-glare" style="border-radius: var(--rounded-lg);"></div>
+                    <div class="p-2">
+                        <img src="images/instant_sync.png" class="img-fluid" style="border-radius: var(--rounded-md); width: 100%; object-fit: cover;" alt="Instant Cloud Sync" />
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6 order-md-2">
+            <div class="col-md-6 order-md-2 stagger-child">
                 <div class="feature-card-soft">
                     <div class="feature-icon-wrapper">
                         <i class="bi bi-lightning-charge-fill"></i>
@@ -92,6 +136,28 @@
                     <p class="text-secondary mb-0">
                         No asynchronous training. Enrolled faces are instantly indexed and searchable for attendance in under a second. Complete session management and validation at your fingertips.
                     </p>
+                </div>
+            </div>
+        </div>
+
+        @* Stats row *@
+        <div class="reveal-on-scroll row g-4 mt-5 pt-3">
+            <div class="col-md-4 stagger-child">
+                <div class="text-center p-4">
+                    <div class="stat-value" id="statAccuracy" style="font-size: 48px;">0</div>
+                    <div class="stat-label">Face Match Accuracy</div>
+                </div>
+            </div>
+            <div class="col-md-4 stagger-child">
+                <div class="text-center p-4">
+                    <div class="stat-value" id="statSpeed" style="font-size: 48px;">0</div>
+                    <div class="stat-label">Millisecond Recognition</div>
+                </div>
+            </div>
+            <div class="col-md-4 stagger-child">
+                <div class="text-center p-4">
+                    <div class="stat-value" id="statUptime" style="font-size: 48px;">0</div>
+                    <div class="stat-label">Cloud Uptime SLA</div>
                 </div>
             </div>
         </div>
@@ -105,5 +171,22 @@
     {
         var token = await JS.InvokeAsync<string>("authStorage.getToken");
         isLoggedIn = !string.IsNullOrEmpty(token) && token != "null" && token != "undefined";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Start particle system
+            await JS.InvokeVoidAsync("attencialAnimations.startParticles", "particleCanvas");
+
+            // Init scroll reveal, tilt cards, morphing blobs
+            await JS.InvokeVoidAsync("attencialAnimations.initAll");
+
+            // Animated counters for stats
+            await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statAccuracy", 99, 2000);
+            await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSpeed", 800, 1800);
+            await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statUptime", 99, 2200);
+        }
     }
 }
