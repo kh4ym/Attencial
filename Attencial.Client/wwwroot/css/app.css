@@ -1368,3 +1368,189 @@ select.form-control-custom {
         padding: var(--spacing-xxl) 0;
     }
 }
+
+/* ==========================================================================
+   SESSION PAGE
+   ========================================================================== */
+
+/* Expiry duration pills */
+.expiry-pill {
+    padding: 8px 18px;
+    border-radius: var(--rounded-full);
+    border: 1.5px solid var(--colors-ash);
+    background: var(--colors-canvas);
+    color: var(--colors-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.expiry-pill:hover {
+    border-color: var(--colors-primary);
+    color: var(--colors-primary);
+    background: rgba(230, 0, 35, 0.04);
+}
+
+.expiry-pill-active {
+    background: var(--colors-primary);
+    border-color: var(--colors-primary);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(230, 0, 35, 0.3);
+}
+
+.expiry-pill-active:hover {
+    color: #fff;
+    background: var(--colors-primary-pressed);
+}
+
+/* Dark-tinted select */
+.form-select-dark {
+    background: var(--colors-canvas);
+    border: 1px solid var(--colors-ash);
+    border-radius: var(--rounded-md);
+    color: var(--colors-ink);
+    padding: 10px 14px;
+    width: 100%;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23888' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    transition: border-color var(--duration-fast) var(--ease-smooth),
+                box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.form-select-dark:focus {
+    border-color: var(--colors-primary);
+    box-shadow: 0 0 0 3px rgba(230, 0, 35, 0.08);
+}
+
+.form-input-dark {
+    background: var(--colors-canvas);
+    border: 1px solid var(--colors-ash);
+    border-radius: var(--rounded-md);
+    color: var(--colors-ink);
+    padding: 10px 14px;
+    width: 100%;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    outline: none;
+    transition: border-color var(--duration-fast) var(--ease-smooth),
+                box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.form-input-dark:focus {
+    border-color: var(--colors-primary);
+    box-shadow: 0 0 0 3px rgba(230, 0, 35, 0.08);
+}
+
+/* Countdown banner */
+.countdown-banner {
+    background: var(--colors-canvas);
+    border: 1px solid var(--colors-hairline);
+    border-radius: var(--rounded-md);
+    padding: 1.25rem 1.5rem;
+    transition: border-color var(--duration-normal), background var(--duration-normal);
+}
+
+.countdown-urgent {
+    border-color: rgba(220, 53, 69, 0.4);
+    background: rgba(220, 53, 69, 0.03);
+    animation: urgentPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    50%       { box-shadow: 0 0 0 4px rgba(220,53,69,0.12); }
+}
+
+.countdown-digits {
+    font-family: 'Manrope', monospace;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--colors-ink);
+}
+
+.countdown-urgent .countdown-digits {
+    color: #dc3545;
+}
+
+.countdown-bar-track {
+    height: 4px;
+    background: var(--colors-secondary-bg);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.countdown-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--colors-primary), #ff4d6a);
+    border-radius: 99px;
+    transition: width 1s linear;
+}
+
+/* QR wrapper */
+.qr-wrapper {
+    width: 216px;
+    height: 216px;
+    border-radius: var(--rounded-md);
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 8px rgba(230, 0, 35, 0.06), 0 4px 24px rgba(0,0,0,0.1);
+    padding: 8px;
+}
+
+.qr-wrapper img,
+.qr-wrapper canvas {
+    width: 200px !important;
+    height: 200px !important;
+}
+
+/* Token display */
+.token-display {
+    background: var(--colors-surface-card);
+    border: 1px solid var(--colors-hairline);
+    border-radius: var(--rounded-sm);
+    padding: 10px 14px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Danger outline button */
+.btn-danger-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 10px 20px;
+    border-radius: var(--rounded-md);
+    border: 1.5px solid rgba(220, 53, 69, 0.4);
+    background: rgba(220, 53, 69, 0.04);
+    color: #dc3545;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-smooth);
+    white-space: nowrap;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    box-shadow: 0 4px 16px rgba(220,53,69,0.2);
+}
+
+.btn-danger-outline:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+

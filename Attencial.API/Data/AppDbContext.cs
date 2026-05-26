@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<FacultyAttendanceRecord> FacultyAttendanceRecords { get; set; }
     public DbSet<LeaveRequest> LeaveRequests { get; set; }
     public DbSet<FacultyAbuseLog> FacultyAbuseLogs { get; set; }
+    public DbSet<EnrollmentRequest> EnrollmentRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,11 @@ public class AppDbContext : DbContext
         // One enrollment per student per course
         modelBuilder.Entity<Enrollment>()
             .HasIndex(e => new { e.StudentId, e.CourseId })
+            .IsUnique();
+
+        // One enrollment *request* per student per course at a time
+        modelBuilder.Entity<EnrollmentRequest>()
+            .HasIndex(er => new { er.StudentId, er.CourseId })
             .IsUnique();
 
         // Token string must be unique

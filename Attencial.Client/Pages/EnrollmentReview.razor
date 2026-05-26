@@ -1,0 +1,264 @@
+@page "/enrollment-review"
+@using Attencial.Shared.Dtos
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Enrollment Review Queue — Attencial</PageTitle>
+
+<div class="feature-card-soft animate-fade-in-scale w-100 mx-auto" style="max-width: 820px;">
+
+    @* Header *@
+    <div class="text-center mb-4">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 animate-float"
+             style="width: 60px; height: 60px; font-size: 1.8rem;
+                    background: rgba(230,0,35,0.1); color: var(--colors-primary);">
+            <i class="bi bi-person-check-fill"></i>
+        </div>
+        <h1 class="h3 fw-bold mb-1">Enrollment Review Queue</h1>
+        <p class="text-secondary small mb-0">Review and approve student enrollment requests for your courses.</p>
+    </div>
+
+    @* Alert *@
+    @if (message is not null)
+    {
+        <div class="@(message.StartsWith("✅") ? "alert-glass-success" : "alert-glass") mb-4 d-flex align-items-start gap-2 animate-scale-bounce">
+            <i class="bi @(message.StartsWith("✅") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") mt-1"></i>
+            <span class="small">@message.Replace("✅ ", "").Replace("❌ ", "")</span>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-premium"></div>
+            <p class="text-muted small mt-3">Loading pending enrollment requests...</p>
+        </div>
+    }
+    else if (requests.Count == 0)
+    {
+        <div class="alert-glass text-center py-5">
+            <i class="bi bi-emoji-smile fs-1 text-success mb-3 d-block"></i>
+            <h4 class="fw-bold text-white mb-1">All Clear!</h4>
+            <p class="text-muted small mb-0">No pending enrollment requests for your courses.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-4">
+            @foreach (var req in requests)
+            {
+                <div class="p-4 animate-fade-in"
+                     style="background: rgba(255,255,255,0.02); border: 1px solid var(--colors-hairline);
+                            border-radius: var(--rounded-md);">
+
+                    @* Request header *@
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                        <div>
+                            <h4 class="fw-bold fs-5 text-white mb-0">@req.StudentName</h4>
+                            <span class="badge bg-secondary px-2 py-1 text-white mt-1" style="font-size: 10px;">
+                                <i class="bi bi-person-badge me-1"></i>@req.RollNumber
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold text-white" style="font-size: 14px;">@req.CourseName</div>
+                            <span class="badge px-2 py-1 mt-1"
+                                  style="font-size: 10px; background: rgba(0,123,255,0.15); color: #4da3ff; border-radius: 6px;">
+                                @req.CourseCode
+                            </span>
+                            <div class="text-muted mt-1" style="font-size: 11px;">
+                                Requested @req.RequestedAt.ToLocalTime().ToString("g")
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Rejection note input (shown when reject panel is open) *@
+                    @if (rejectOpenIds.Contains(req.Id))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold mb-1">
+                                REJECTION NOTE (OPTIONAL)
+                            </label>
+                            <textarea class="form-input-dark"
+                                      style="min-height: 60px; font-size: 13px;"
+                                      @bind="rejectionNotes[req.Id]"
+                                      placeholder="Provide a reason for rejection (shown to the student)..."></textarea>
+                        </div>
+                    }
+
+                    @* Action buttons *@
+                    <div class="d-flex gap-2 flex-wrap border-top pt-3 border-secondary" style="border-top-style: dashed !important;">
+                        @if (!rejectOpenIds.Contains(req.Id))
+                        {
+                            <button class="btn-premium py-2 flex-grow-1"
+                                    id="approve-btn-@req.Id"
+                                    disabled="@(submittingId == req.Id)"
+                                    @onclick="() => Approve(req.Id)">
+                                @if (submittingId == req.Id)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle me-1"></i>
+                                }
+                                Approve
+                            </button>
+                            <button class="btn-premium-outline py-2 flex-grow-1"
+                                    id="reject-open-btn-@req.Id"
+                                    disabled="@(submittingId == req.Id)"
+                                    @onclick="() => OpenReject(req.Id)">
+                                <i class="bi bi-x-circle me-1"></i> Reject
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="py-2 flex-grow-1"
+                                    id="reject-confirm-btn-@req.Id"
+                                    style="background: rgba(220,53,69,0.15); color: #dc3545; border: 1px solid rgba(220,53,69,0.4);
+                                           border-radius: var(--rounded-md); font-size: 13px; font-weight: 600; cursor: pointer;"
+                                    disabled="@(submittingId == req.Id)"
+                                    @onclick="() => Reject(req.Id)">
+                                @if (submittingId == req.Id)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-x-circle-fill me-1"></i>
+                                }
+                                Confirm Rejection
+                            </button>
+                            <button class="btn-premium-outline py-2"
+                                    style="flex: 0 0 auto;"
+                                    @onclick="() => CancelReject(req.Id)">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<EnrollmentRequestDto> requests = new();
+    private bool  isLoading    = true;
+    private string? message;
+    private int?  submittingId;
+
+    // Track which cards have the reject panel open
+    private HashSet<int> rejectOpenIds   = new();
+    private Dictionary<int, string> rejectionNotes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("authStorage.getToken");
+        if (string.IsNullOrEmpty(token) || token == "null")
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        await LoadRequests(token);
+    }
+
+    private async Task LoadRequests(string token)
+    {
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, "api/courses/enrollment-requests/pending");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+            if (res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadFromJsonAsync<ApiResponse<List<EnrollmentRequestDto>>>();
+                requests = body?.Data ?? new();
+                foreach (var r in requests)
+                    rejectionNotes.TryAdd(r.Id, string.Empty);
+            }
+            else
+            {
+                var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+                message = $"❌ {body?.Message ?? $"Failed to load requests ({res.StatusCode})."}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Connection error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenReject(int id)
+    {
+        rejectOpenIds.Add(id);
+        rejectionNotes.TryAdd(id, string.Empty);
+    }
+
+    private void CancelReject(int id) => rejectOpenIds.Remove(id);
+
+    private async Task Approve(int requestId)
+    {
+        submittingId = requestId;
+        message = null;
+        StateHasChanged();
+        try
+        {
+            var token = await JS.InvokeAsync<string>("authStorage.getToken");
+            var req = new HttpRequestMessage(HttpMethod.Put, $"api/courses/enrollment-requests/{requestId}/approve");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+            var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+
+            if (res.IsSuccessStatusCode && body?.Success == true)
+            {
+                message = $"✅ {body.Message}";
+                await JS.InvokeVoidAsync("attencialAnimations.confettiBurst");
+                await LoadRequests(token);
+            }
+            else
+            {
+                message = $"❌ {body?.Message ?? "Approval failed."}";
+            }
+        }
+        catch (Exception ex) { message = $"❌ Connection error: {ex.Message}"; }
+        finally { submittingId = null; }
+    }
+
+    private async Task Reject(int requestId)
+    {
+        submittingId = requestId;
+        message = null;
+        StateHasChanged();
+        try
+        {
+            var token = await JS.InvokeAsync<string>("authStorage.getToken");
+            var note  = rejectionNotes.GetValueOrDefault(requestId, string.Empty);
+            var req   = new HttpRequestMessage(HttpMethod.Put, $"api/courses/enrollment-requests/{requestId}/reject");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            req.Content = JsonContent.Create(new { Note = note });
+            var res  = await Http.SendAsync(req);
+            var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+
+            if (res.IsSuccessStatusCode && body?.Success == true)
+            {
+                message = $"✅ {body.Message}";
+                rejectOpenIds.Remove(requestId);
+                await LoadRequests(token);
+            }
+            else
+            {
+                message = $"❌ {body?.Message ?? "Rejection failed."}";
+            }
+        }
+        catch (Exception ex) { message = $"❌ Connection error: {ex.Message}"; }
+        finally { submittingId = null; }
+    }
+}

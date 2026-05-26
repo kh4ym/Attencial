@@ -120,6 +120,101 @@ else
         </div>
     </div>
 
+    @* Course Attendance List for Students *@
+    @if (userRole == "Student")
+    {
+        <div class="mt-4 animate-fade-in delay-2">
+            <h3 class="heading-lg mb-3" style="font-family: 'Manrope', sans-serif; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-journal-check" style="color: var(--colors-primary);"></i>
+                My Courses & Attendance
+            </h3>
+
+            @if (studentSummary is null || studentSummary.CourseAttendance.Count == 0)
+            {
+                <div class="feature-card-soft text-center py-5">
+                    <i class="bi bi-journal-x text-muted mb-2 animate-float" style="font-size: 2.5rem; display: block;"></i>
+                    <p class="text-muted">You are not currently enrolled in any courses.</p>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var course in studentSummary.CourseAttendance)
+                    {
+                        var statusColor = course.Status == "Green" ? "#2ecc71" : course.Status == "Yellow" ? "#f1c40f" : "#dc3545";
+                        var statusBg = course.Status == "Green" ? "rgba(46, 204, 113, 0.08)" : course.Status == "Yellow" ? "rgba(241, 196, 15, 0.08)" : "rgba(220, 53, 69, 0.08)";
+                        var isExpanded = expandedCourses.ContainsKey(course.CourseId) && expandedCourses[course.CourseId];
+
+                        <div class="col-md-6">
+                            <div class="feature-card-soft h-100 d-flex flex-column" style="transition: border-color 0.3s; border-color: @(isExpanded ? statusColor : "var(--colors-hairline)") !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <span class="badge-custom mb-2" style="background: @statusBg; color: @statusColor; border: 1px solid rgba(255,255,255,0.05);">
+                                            @course.CourseCode
+                                        </span>
+                                        <h5 class="fw-bold mb-1 text-white" style="font-family: 'Manrope', sans-serif;">@course.CourseName</h5>
+                                        <p class="text-muted small mb-0">Prof. @course.ProfessorName</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="fw-bold fs-4" style="color: @statusColor; font-family: 'Manrope', sans-serif;">@course.Percentage%</span>
+                                        <div class="text-muted small">@course.AttendedSessions / @course.TotalSessions classes</div>
+                                    </div>
+                                </div>
+
+                                @* Progress Bar *@
+                                <div class="progress-bar-track mb-3" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px;">
+                                    <div class="progress-bar-fill" style="height: 100%; width: @(course.Percentage)%; background: @statusColor; border-radius: 3px;"></div>
+                                </div>
+
+                                @* Expandable missed sessions block *@
+                                <div class="mt-auto pt-3" style="border-top: 1px dashed rgba(255, 255, 255, 0.06);">
+                                    @if (course.MissedSessions.Count == 0)
+                                    {
+                                        <div class="d-flex align-items-center gap-2 text-success small">
+                                            <i class="bi bi-patch-check-fill"></i>
+                                            <span>100% Perfect Attendance! Keep it up.</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-clean d-flex align-items-center justify-content-between w-100 text-muted small" 
+                                                @onclick="() => ToggleCourse(course.CourseId)">
+                                            <span style="font-size: 13px;">
+                                                <i class="bi bi-exclamation-triangle-fill" style="color: #f1c40f; margin-right: 4px;"></i>
+                                                Missed @course.MissedSessions.Count @(course.MissedSessions.Count == 1 ? "session" : "sessions")
+                                            </span>
+                                            <span style="font-size: 13px;">
+                                                @(isExpanded ? "Hide Details" : "View Dates")
+                                                <i class="bi bi-chevron-@(isExpanded ? "up" : "down") ms-1"></i>
+                                            </span>
+                                        </button>
+
+                                        @if (isExpanded)
+                                        {
+                                            <div class="mt-3 animate-slide-up" style="background: rgba(0, 0, 0, 0.15); border-radius: var(--rounded-sm); padding: 8px 12px; max-height: 120px; overflow-y: auto;">
+                                                <table class="table table-sm table-borderless mb-0 text-muted" style="font-size: 12px;">
+                                                    <tbody>
+                                                        @foreach (var session in course.MissedSessions)
+                                                        {
+                                                            <tr>
+                                                                <td style="color: var(--colors-primary);"><i class="bi bi-x-circle-fill"></i> Missed</td>
+                                                                <td class="text-end">@session.Date.ToLocalTime().ToString("MMM dd, yyyy · hh:mm tt")</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
     @* Quick Actions + System Status *@
     <div class="row g-4 mt-3 animate-fade-in delay-2">
         <div class="col-md-5">
@@ -184,9 +279,22 @@ else
     private string enrollmentStatus = "Unknown";
     private bool isEnrolled = false;
     private string? loadError = null;
-    private int totalCourses = 3;
-    private int attendanceRate = 92;
-    private int sessionsAttended = 14;
+    private int totalCourses = 0;
+    private int attendanceRate = 0;
+    private int sessionsAttended = 0;
+
+    // Student stats
+    private StudentAttendanceSummaryDto? studentSummary;
+    private Dictionary<int, bool> expandedCourses = new();
+    private bool hasAnimated = false;
+
+    private void ToggleCourse(int courseId)
+    {
+        if (expandedCourses.ContainsKey(courseId))
+            expandedCourses[courseId] = !expandedCourses[courseId];
+        else
+            expandedCourses[courseId] = true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -241,6 +349,31 @@ else
             {
                 loadError = $"Server returned {enrollResponse.StatusCode} when checking enrollment.";
             }
+
+            // If user is a student, fetch student statistics
+            if (userRole == "Student")
+            {
+                var attendanceRequest = new HttpRequestMessage(HttpMethod.Get, "api/students/me/attendance");
+                attendanceRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var attendanceResponse = await Http.SendAsync(attendanceRequest);
+
+                if (attendanceResponse.IsSuccessStatusCode)
+                {
+                    var resDto = await attendanceResponse.Content.ReadFromJsonAsync<ApiResponse<StudentAttendanceSummaryDto>>();
+                    studentSummary = resDto?.Data;
+
+                    if (studentSummary is not null)
+                    {
+                        totalCourses = studentSummary.TotalCourses;
+                        attendanceRate = (int)Math.Round(studentSummary.OverallPercentage);
+                        sessionsAttended = studentSummary.PresentSessions;
+                    }
+                }
+                else
+                {
+                    loadError = $"Failed to load student attendance statistics. Status: {attendanceResponse.StatusCode}";
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -254,8 +387,9 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !isLoading && isAuthorized)
+        if (!isLoading && isAuthorized && !hasAnimated)
         {
+            hasAnimated = true;
             await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statCourses", totalCourses, 1500);
             await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statAttendance", attendanceRate, 1800);
             await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSessions", sessionsAttended, 1600);
@@ -273,6 +407,7 @@ else
         var token = await JS.InvokeAsync<string>("authStorage.getToken");
         if (!string.IsNullOrEmpty(token))
         {
+            hasAnimated = false;
             await LoadDashboardData(token);
             await JS.InvokeVoidAsync("attencialAnimations.confettiBurst");
         }

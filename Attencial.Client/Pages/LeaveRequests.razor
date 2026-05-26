@@ -1,0 +1,343 @@
+@page "/leave-requests"
+@using Attencial.Shared.Dtos
+@using System.Net.Http.Headers
+@using System.IO
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Leave Requests — Attencial</PageTitle>
+
+<div class="feature-card-soft animate-fade-in-scale w-100 mx-auto" style="max-width: 800px;">
+    @* Portal Header *@
+    <div class="text-center mb-4">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 animate-float"
+             style="width: 60px; height: 60px; font-size: 1.8rem; background: rgba(230, 0, 35, 0.1) !important; color: var(--colors-primary) !important;">
+            <i class="bi bi-calendar-range-fill"></i>
+        </div>
+        <h2 class="h3 fw-bold mb-1">My Leave Requests</h2>
+        <p class="text-secondary small">Submit leave applications and track their approval status.</p>
+    </div>
+
+    @* Alerts *@
+    @if (message is not null)
+    {
+        @if (message.StartsWith("❌"))
+        {
+            <div class="alert-glass mb-4 d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-triangle-fill mt-1" style="color: var(--colors-primary);"></i>
+                <span class="small text-start">@message.Replace("❌ ", "")</span>
+            </div>
+        }
+        else if (message.StartsWith("✅"))
+        {
+            <div class="alert-glass-success mb-4 d-flex align-items-start gap-2 animate-scale-bounce">
+                <i class="bi bi-check-circle-fill mt-1"></i>
+                <span class="small text-start">@message.Replace("✅ ", "")</span>
+            </div>
+        }
+        else
+        {
+            <div class="alert-glass mb-4 d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle-fill mt-1"></i>
+                <span class="small text-start">@message</span>
+            </div>
+        }
+    }
+
+    <div class="row g-4">
+        @* Left: Apply form *@
+        <div class="col-md-5">
+            <div class="feature-card-soft p-3" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--colors-hairline);">
+                <h5 class="heading-md mb-3"><i class="bi bi-file-earmark-plus-fill text-primary"></i> Apply for Leave</h5>
+                
+                <form @onsubmit="SubmitLeave">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">LEAVE TYPE</label>
+                        <select class="form-select form-select-dark" @bind="newLeaveType" required>
+                            <option value="">— Select Type —</option>
+                            <option value="Sick">Sick Leave</option>
+                            <option value="Casual">Casual Leave</option>
+                            <option value="Medical">Medical Leave</option>
+                            <option value="Personal">Personal Leave</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">START DATE</label>
+                        <input type="date" class="form-input-dark py-1" @bind="newStartDate" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">END DATE</label>
+                        <input type="date" class="form-input-dark py-1" @bind="newEndDate" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">REASON</label>
+                        <textarea class="form-input-dark" style="min-height: 80px; font-size: 13px;" @bind="newReason" placeholder="Describe the reason for leave..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">PDF ATTACHMENT (OPTIONAL)</label>
+                        <div class="d-flex flex-column gap-1">
+                            <InputFile OnChange="OnInputFileChange" accept=".pdf" class="form-control form-control-sm text-white" style="background: var(--colors-canvas); border: 1px solid var(--colors-ash); font-size: 12px;" />
+                            @if (!string.IsNullOrEmpty(fileName))
+                            {
+                                <span class="text-success small fw-medium" style="font-size: 11px;"><i class="bi bi-file-pdf-fill"></i> @fileName</span>
+                            }
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-premium w-100 py-2 mt-2" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Submitting...</span>
+                        }
+                        else
+                        {
+                            <span>Submit Request</span>
+                        }
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @* Right: History list *@
+        <div class="col-md-7">
+            <div class="feature-card-soft p-3 h-100 d-flex flex-column" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--colors-hairline);">
+                <h5 class="heading-md mb-3"><i class="bi bi-clock-history text-primary"></i> Application History</h5>
+                
+                @if (isLoadingHistory)
+                {
+                    <div class="text-center py-5 my-auto">
+                        <div class="spinner-premium"></div>
+                        <p class="text-muted small mt-2">Loading applications...</p>
+                    </div>
+                }
+                else if (leaves.Count == 0)
+                {
+                    <div class="text-center py-5 my-auto text-muted small">
+                        <i class="bi bi-folder2-open fs-2 mb-2 d-block text-secondary"></i>
+                        No leave applications found.
+                    </div>
+                }
+                else
+                {
+                    <div class="overflow-auto flex-grow-1" style="max-height: 480px; padding-right: 4px;">
+                        @foreach (var l in leaves)
+                        {
+                            <div class="alert-glass p-3 mb-3 animate-fade-in" style="font-size: 12px;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="fw-bold fs-6 text-white">@l.LeaveType Leave</span>
+                                        <span class="text-muted d-block" style="font-size: 11px;">
+                                            @l.StartDate.ToLocalTime().ToString("d") to @l.EndDate.ToLocalTime().ToString("d")
+                                        </span>
+                                    </div>
+                                    <span class="badge px-2 py-1 @GetBadgeClass(l.Status)" style="font-size: 10px; font-weight: 500;">
+                                        @l.Status
+                                    </span>
+                                </div>
+
+                                <p class="text-secondary mb-2" style="font-size: 12px; line-height: 1.4;">
+                                    <strong>Reason:</strong> @l.Reason
+                                </p>
+
+                                @if (!string.IsNullOrEmpty(l.AttachmentUrl))
+                                {
+                                    <div class="mb-2">
+                                        <a href="@GetAbsoluteAttachmentUrl(l.AttachmentUrl)" target="_blank" class="text-decoration-none small" style="color: var(--colors-focus-outer); font-weight: 500;">
+                                            <i class="bi bi-file-pdf"></i> View Attached PDF
+                                        </a>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(l.AdminNote))
+                                {
+                                    <div class="border-top pt-2 mt-2 border-secondary" style="border-top-style: dashed !important; font-size: 11px;">
+                                        <strong class="text-white">Reviewer Note:</strong>
+                                        <p class="text-muted mb-0 italic mt-1">"@l.AdminNote"</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<LeaveRequestResponseDto> leaves = new();
+    private bool isLoadingHistory = true;
+    private bool isSubmitting = false;
+    private string? message;
+
+    // Form inputs
+    private string newLeaveType = "";
+    private DateTime newStartDate = DateTime.Today;
+    private DateTime newEndDate = DateTime.Today.AddDays(1);
+    private string newReason = "";
+    private string? fileBase64;
+    private string? fileName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("authStorage.getToken");
+        if (string.IsNullOrEmpty(token) || token == "null")
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadHistory(token);
+    }
+
+    private async Task LoadHistory(string token)
+    {
+        isLoadingHistory = true;
+        leaves.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, "api/leave");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadFromJsonAsync<ApiResponse<List<LeaveRequestResponseDto>>>();
+                if (body != null && body.Success && body.Data != null)
+                {
+                    leaves = body.Data;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Error loading history: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingHistory = false;
+        }
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if (file.ContentType != "application/pdf")
+            {
+                message = "❌ Only PDF files are supported.";
+                return;
+            }
+
+            try
+            {
+                // Max size: 5MB
+                var maxFileSize = 1024 * 1024 * 5;
+                using var stream = file.OpenReadStream(maxFileSize);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+                fileBase64 = Convert.ToBase64String(bytes);
+                fileName = file.Name;
+                message = null; // Clear error
+            }
+            catch (Exception ex)
+            {
+                message = $"❌ Failed to read file: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task SubmitLeave()
+    {
+        if (isSubmitting) return;
+
+        if (string.IsNullOrEmpty(newLeaveType))
+        {
+            message = "❌ Please select a leave type.";
+            return;
+        }
+
+        if (newEndDate < newStartDate)
+        {
+            message = "❌ End Date cannot be earlier than Start Date.";
+            return;
+        }
+
+        isSubmitting = true;
+        message = "⏳ Submitting leave application...";
+        StateHasChanged();
+
+        try
+        {
+            var token = await JS.InvokeAsync<string>("authStorage.getToken");
+            
+            var request = new LeaveRequestCreateRequest
+            {
+                LeaveType = newLeaveType,
+                Reason = newReason.Trim(),
+                StartDate = newStartDate,
+                EndDate = newEndDate,
+                AttachmentBase64 = fileBase64,
+                AttachmentFileName = fileName
+            };
+
+            var reqMessage = new HttpRequestMessage(HttpMethod.Post, "api/leave");
+            reqMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            reqMessage.Content = JsonContent.Create(request);
+
+            var res = await Http.SendAsync(reqMessage);
+            var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+
+            if (res.IsSuccessStatusCode && body != null && body.Success)
+            {
+                message = "✅ Leave request submitted successfully!";
+                
+                // Clear form
+                newLeaveType = "";
+                newStartDate = DateTime.Today;
+                newEndDate = DateTime.Today.AddDays(1);
+                newReason = "";
+                fileBase64 = null;
+                fileName = null;
+
+                await JS.InvokeVoidAsync("attencialAnimations.confettiBurst");
+                await LoadHistory(token);
+            }
+            else
+            {
+                message = $"❌ {body?.Message ?? "Submission failed."}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Connection error: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GetAbsoluteAttachmentUrl(string relativeUrl)
+    {
+        var baseUri = Http.BaseAddress?.ToString() ?? "http://localhost:5158/";
+        return $"{baseUri.TrimEnd('/')}/{relativeUrl.TrimStart('/')}";
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Approved" => "bg-success text-white",
+        "Rejected" => "bg-danger text-white",
+        _ => "bg-warning text-dark"
+    };
+}

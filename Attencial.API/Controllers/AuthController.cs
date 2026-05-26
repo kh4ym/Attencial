@@ -1,13 +1,17 @@
 using Attencial.API.Data;
 using Attencial.API.Models;
 using Attencial.Shared.Dtos;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Attencial.API.Controllers;
 
@@ -17,17 +21,34 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _config;
+    private readonly IDistributedCache _cache;
+    private readonly IValidator<RegisterRequest> _registerValidator;
+    private readonly IValidator<LoginRequest> _loginValidator;
 
-    public AuthController(AppDbContext context, IConfiguration config)
+    public AuthController(
+        AppDbContext context, 
+        IConfiguration config, 
+        IDistributedCache cache,
+        IValidator<RegisterRequest> registerValidator,
+        IValidator<LoginRequest> loginValidator)
     {
         _context = context;
         _config = config;
+        _cache = cache;
+        _registerValidator = registerValidator;
+        _loginValidator = loginValidator;
     }
 
     // POST /api/auth/register
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        var validationResult = await _registerValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
         // Check if email already exists
         var existingUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -79,6 +100,27 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        var validationResult = await _loginValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var lockoutKey = $"login:lockout:{normalizedEmail}";
+        var failuresKey = $"login:failures:{normalizedEmail}";
+
+        // 1. Check if user is locked out
+        var isLocked = await _cache.GetStringAsync(lockoutKey);
+        if (isLocked is not null)
+        {
+            return StatusCode(429, new ApiResponse<string>
+            {
+                Success = false,
+                Message = "Too many failed login attempts. Your account is locked for 5 minutes."
+            });
+        }
+
         // Find user by email
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -86,12 +128,66 @@ public class AuthController : ControllerBase
         // Verify password against stored hash
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
-            return Unauthorized(new ApiResponse<string>
+            // Fetch current failures
+            var failuresStr = await _cache.GetStringAsync(failuresKey);
+            int failures = 0;
+            if (failuresStr is not null)
             {
-                Success = false,
-                Message = "Invalid email or password"
-            });
+                int.TryParse(failuresStr, out failures);
+            }
+
+            failures++;
+
+            if (failures >= 10)
+            {
+                // Lockout account for 5 minutes
+                var lockoutOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                };
+                await _cache.SetStringAsync(lockoutKey, "locked", lockoutOptions);
+                await _cache.RemoveAsync(failuresKey);
+
+                // Insert AbuseLog
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var abuseLog = new AbuseLog
+                {
+                    SessionId = null,
+                    StudentId = null,
+                    AbuseType = "Brute Force Login Lockout",
+                    Details = $"Account locked out due to 10 consecutive failed login attempts. Tried email: {request.Email}",
+                    IpAddress = ipAddress,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.AbuseLogs.Add(abuseLog);
+                await _context.SaveChangesAsync();
+
+                return StatusCode(429, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Too many failed login attempts. Your account is locked for 5 minutes."
+                });
+            }
+            else
+            {
+                // Store failures with 15-minute sliding/absolute expiration
+                var failureOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
+                };
+                await _cache.SetStringAsync(failuresKey, failures.ToString(), failureOptions);
+
+                return Unauthorized(new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Invalid email or password"
+                });
+            }
         }
+
+        // Clear failures on successful login
+        await _cache.RemoveAsync(failuresKey);
 
         // Build the JWT token
         var token = GenerateJwtToken(user);

@@ -13,6 +13,7 @@ public class Student
     // Navigation properties
     public User User { get; set; } = null!;
     public List<Enrollment> Enrollments { get; set; } = new();
+    public List<EnrollmentRequest> EnrollmentRequests { get; set; } = new();
     public List<FaceVector> FaceVectors { get; set; } = new();
     public List<AttendanceRecord> AttendanceRecords { get; set; } = new();
 }

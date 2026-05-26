@@ -3,6 +3,7 @@ using System;
 using Attencial.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Attencial.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260526164758_MakeSessionIdNullableInAbuseLog")]
+    partial class MakeSessionIdNullableInAbuseLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,43 +186,6 @@ namespace Attencial.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Enrollments");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.EnrollmentRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("StudentId", "CourseId")
-                        .IsUnique();
-
-                    b.ToTable("EnrollmentRequests");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
@@ -579,25 +545,6 @@ namespace Attencial.API.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.EnrollmentRequest", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Course", "Course")
-                        .WithMany("EnrollmentRequests")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Attencial.API.Models.Student", "Student")
-                        .WithMany("EnrollmentRequests")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
                 {
                     b.HasOne("Attencial.API.Models.Professor", "Professor")
@@ -690,8 +637,6 @@ namespace Attencial.API.Migrations
                 {
                     b.Navigation("AttendanceSessions");
 
-                    b.Navigation("EnrollmentRequests");
-
                     b.Navigation("Enrollments");
                 });
 
@@ -707,8 +652,6 @@ namespace Attencial.API.Migrations
             modelBuilder.Entity("Attencial.API.Models.Student", b =>
                 {
                     b.Navigation("AttendanceRecords");
-
-                    b.Navigation("EnrollmentRequests");
 
                     b.Navigation("Enrollments");
 

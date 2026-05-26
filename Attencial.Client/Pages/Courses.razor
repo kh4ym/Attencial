@@ -1,0 +1,250 @@
+@page "/courses"
+@using Attencial.Shared.Dtos
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Browse Courses — Attencial</PageTitle>
+
+<div class="animate-fade-in-scale w-100 mx-auto" style="max-width: 1000px;">
+
+    @* Header *@
+    <div class="text-center mb-5">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 animate-float"
+             style="width: 64px; height: 64px; font-size: 2rem;
+                    background: rgba(230,0,35,0.12); color: var(--colors-primary);">
+            <i class="bi bi-journals"></i>
+        </div>
+        <h1 class="h2 fw-bold mb-1">Browse Courses</h1>
+        <p class="text-secondary small mb-0">Find and request enrollment in available courses. Your professor will review your request.</p>
+    </div>
+
+    @* Alert *@
+    @if (message is not null)
+    {
+        <div class="@(message.StartsWith("✅") ? "alert-glass-success" : "alert-glass") mb-4 d-flex align-items-start gap-2 animate-scale-bounce">
+            <i class="bi @(message.StartsWith("✅") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") mt-1"></i>
+            <span class="small">@message.Replace("✅ ", "").Replace("❌ ", "")</span>
+        </div>
+    }
+
+    @* Loading *@
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-premium"></div>
+            <p class="text-muted small mt-3">Loading available courses...</p>
+        </div>
+    }
+    else if (courses.Count == 0)
+    {
+        <div class="feature-card-soft text-center py-5">
+            <i class="bi bi-journal-x fs-1 mb-3 d-block" style="color: var(--colors-primary);"></i>
+            <h4 class="fw-bold text-white mb-1">No Courses Available</h4>
+            <p class="text-muted small">No courses have been created yet. Check back later.</p>
+        </div>
+    }
+    else
+    {
+        @* Filter tabs *@
+        <div class="d-flex gap-2 flex-wrap mb-4">
+            @foreach (var f in new[] { "All", "None", "Pending", "Approved", "Rejected" })
+            {
+                <button class="btn btn-sm @(activeFilter == f ? "btn-primary" : "btn-outline-secondary")"
+                        style="font-size: 12px; border-radius: var(--rounded-md);"
+                        @onclick="() => activeFilter = f">
+                    @if (f == "All") { <i class="bi bi-grid-3x3-gap-fill me-1"></i> }
+                    else if (f == "None") { <i class="bi bi-plus-circle me-1"></i> }
+                    else if (f == "Pending") { <i class="bi bi-hourglass-split me-1"></i> }
+                    else if (f == "Approved") { <i class="bi bi-check-circle-fill me-1"></i> }
+                    else { <i class="bi bi-x-circle-fill me-1"></i> }
+                    @f <span class="badge bg-secondary ms-1" style="font-size: 10px;">@CountFor(f)</span>
+                </button>
+            }
+        </div>
+
+        <div class="row g-4">
+            @foreach (var course in FilteredCourses)
+            {
+                <div class="col-12 col-md-6 animate-fade-in">
+                    <div class="feature-card-soft h-100 p-4 d-flex flex-column justify-content-between"
+                         style="border: 1px solid var(--colors-hairline); transition: transform 0.2s ease;"
+                         @onmouseenter="() => {}" @onmouseleave="() => {}">
+
+                        @* Top: course info *@
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                <div>
+                                    <h3 class="h5 fw-bold text-white mb-0">@course.Name</h3>
+                                    <span class="text-muted" style="font-size: 12px; font-family: monospace;">@course.CourseCode</span>
+                                </div>
+                                @StatusBadge(course.EnrollmentRequestStatus)
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2 mt-2" style="font-size: 13px;">
+                                <i class="bi bi-person-fill" style="color: var(--colors-primary);"></i>
+                                <span class="text-secondary">@course.ProfessorName</span>
+                                <span class="text-muted">·</span>
+                                <span class="text-muted" style="font-size: 12px;">@course.Department</span>
+                            </div>
+
+                            @if (course.EnrollmentRequestStatus == "Rejected" && !string.IsNullOrEmpty(course.Note))
+                            {
+                                <div class="alert-glass mt-3 p-2" style="font-size: 12px; background: rgba(220,53,69,0.08); border-color: rgba(220,53,69,0.3);">
+                                    <i class="bi bi-chat-square-text me-1" style="color: var(--colors-primary);"></i>
+                                    <span class="text-secondary">Professor note: </span>
+                                    <span class="text-white">@course.Note</span>
+                                </div>
+                            }
+                        </div>
+
+                        @* Action button *@
+                        <div class="mt-auto">
+                            @if (course.EnrollmentRequestStatus == "Approved")
+                            {
+                                <div class="d-flex align-items-center gap-2 py-2" style="font-size: 13px; color: #28a745;">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span class="fw-semibold">Enrolled</span>
+                                </div>
+                            }
+                            else if (course.EnrollmentRequestStatus == "Pending")
+                            {
+                                <div class="d-flex align-items-center gap-2 py-2" style="font-size: 13px; color: #ffc107;">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    <span class="fw-semibold">Awaiting Professor Approval</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="btn-premium w-100 py-2"
+                                        id="enroll-btn-@course.Id"
+                                        disabled="@(submittingCourseId == course.Id)"
+                                        @onclick="() => RequestEnrollment(course.Id, course.Name)">
+                                    @if (submittingCourseId == course.Id)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        <span>Submitting...</span>
+                                    }
+                                    else if (course.EnrollmentRequestStatus == "Rejected")
+                                    {
+                                        <i class="bi bi-arrow-repeat me-1"></i>
+                                        <span>Request Again</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-send-fill me-1"></i>
+                                        <span>Request Enrollment</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<CourseDto> courses = new();
+    private bool   isLoading        = true;
+    private string? message;
+    private int?   submittingCourseId;
+    private string activeFilter = "All";
+
+    private IEnumerable<CourseDto> FilteredCourses =>
+        activeFilter == "All" ? courses : courses.Where(c => c.EnrollmentRequestStatus == activeFilter);
+
+    private int CountFor(string filter) =>
+        filter == "All" ? courses.Count : courses.Count(c => c.EnrollmentRequestStatus == filter);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("authStorage.getToken");
+        if (string.IsNullOrEmpty(token) || token == "null")
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        await LoadCourses(token);
+    }
+
+    private async Task LoadCourses(string token)
+    {
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, "api/courses");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+            if (res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadFromJsonAsync<ApiResponse<List<CourseDto>>>();
+                courses = body?.Data ?? new();
+            }
+            else
+            {
+                var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+                message = $"❌ {body?.Message ?? $"Failed to load courses ({res.StatusCode})."}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Connection error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RequestEnrollment(int courseId, string courseName)
+    {
+        submittingCourseId = courseId;
+        message = null;
+        StateHasChanged();
+
+        try
+        {
+            var token = await JS.InvokeAsync<string>("authStorage.getToken");
+            var req = new HttpRequestMessage(HttpMethod.Post, $"api/courses/{courseId}/enrollment-requests");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+            var body = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
+
+            if (res.IsSuccessStatusCode && body?.Success == true)
+            {
+                message = $"✅ {body.Message}";
+                await LoadCourses(token);
+            }
+            else
+            {
+                message = $"❌ {body?.Message ?? "Request failed."}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Connection error: {ex.Message}";
+        }
+        finally
+        {
+            submittingCourseId = null;
+        }
+    }
+
+    private RenderFragment StatusBadge(string status) => status switch
+    {
+        "Approved" => @<span class="badge px-2 py-1" style="background: rgba(40,167,69,0.2); color: #28a745; font-size: 10px; border-radius: 6px;">
+                          <i class="bi bi-check-circle-fill me-1"></i>Enrolled
+                      </span>,
+        "Pending"  => @<span class="badge px-2 py-1" style="background: rgba(255,193,7,0.2); color: #ffc107; font-size: 10px; border-radius: 6px;">
+                          <i class="bi bi-hourglass-split me-1"></i>Pending
+                      </span>,
+        "Rejected" => @<span class="badge px-2 py-1" style="background: rgba(220,53,69,0.2); color: #dc3545; font-size: 10px; border-radius: 6px;">
+                          <i class="bi bi-x-circle-fill me-1"></i>Rejected
+                      </span>,
+        _          => @<span></span>
+    };
+}

@@ -10,5 +10,6 @@ public class Course
 
     public Professor Professor { get; set; } = null!;
     public List<Enrollment> Enrollments { get; set; } = new();
+    public List<EnrollmentRequest> EnrollmentRequests { get; set; } = new();
     public List<AttendanceSession> AttendanceSessions { get; set; } = new();
 }

@@ -1,5 +1,8 @@
+@using System.Net.Http.Headers
+@using System.Text.Json
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject HttpClient Http
 @implements IDisposable
 
 <header class="navbar-glass">
@@ -18,9 +21,38 @@
                 <a href="dashboard" class="nav-link-custom @GetActiveStyle("dashboard")">
                     <i class="bi bi-grid-1x2-fill"></i> Dashboard
                 </a>
-                <a href="enroll" class="nav-link-custom @GetActiveStyle("enroll")">
-                    <i class="bi bi-person-bounding-box"></i> Enroll Face
-                </a>
+
+                @if (userRole == "Professor")
+                {
+                    <a href="session" class="nav-link-custom @GetActiveStyle("session")">
+                        <i class="bi bi-play-circle-fill"></i> Start Session
+                    </a>
+                    <a href="faculty/check-in" class="nav-link-custom @GetActiveStyle("faculty/check-in")">
+                        <i class="bi bi-shield-lock-fill"></i> Faculty HR
+                    </a>
+                    <a href="leave-requests" class="nav-link-custom @GetActiveStyle("leave-requests")">
+                        <i class="bi bi-calendar-range-fill"></i> Leave Requests
+                    </a>
+                    <a href="admin/leave-review" class="nav-link-custom @GetActiveStyle("admin/leave-review")">
+                        <i class="bi bi-shield-check"></i> Review Leaves
+                    </a>
+                    <a href="enrollment-review" class="nav-link-custom @GetActiveStyle("enrollment-review")">
+                        <i class="bi bi-person-check-fill"></i> Enrollments
+                    </a>
+                    <a href="professor-dashboard" class="nav-link-custom @GetActiveStyle("professor-dashboard")">
+                        <i class="bi bi-graph-up"></i> Analytics
+                    </a>
+                }
+                else
+                {
+                    <a href="courses" class="nav-link-custom @GetActiveStyle("courses")">
+                        <i class="bi bi-journals"></i> My Courses
+                    </a>
+                    <a href="enroll" class="nav-link-custom @GetActiveStyle("enroll")">
+                        <i class="bi bi-person-bounding-box"></i> Enroll Face
+                    </a>
+                }
+
                 <button @onclick="Logout" class="btn-premium-outline ms-2">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
@@ -40,6 +72,7 @@
 
 @code {
     private bool isLoggedIn = false;
+    private string userRole = string.Empty;
     private string currentUri = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -49,6 +82,26 @@
 
         var token = await JS.InvokeAsync<string>("authStorage.getToken");
         isLoggedIn = !string.IsNullOrEmpty(token) && token != "null" && token != "undefined";
+
+        if (isLoggedIn)
+            await LoadRole(token);
+    }
+
+    private async Task LoadRole(string token)
+    {
+        try
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, "api/auth/me");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await Http.SendAsync(req);
+            if (res.IsSuccessStatusCode)
+            {
+                var json = await res.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                userRole = doc.RootElement.GetProperty("data").GetProperty("role").GetString() ?? string.Empty;
+            }
+        }
+        catch { /* silently ignore — nav degrades gracefully */ }
     }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
@@ -67,6 +120,7 @@
     {
         await JS.InvokeVoidAsync("authStorage.removeToken");
         isLoggedIn = false;
+        userRole = string.Empty;
         Nav.NavigateTo("", true);
     }
 
@@ -75,3 +129,4 @@
         Nav.LocationChanged -= OnLocationChanged;
     }
 }
+

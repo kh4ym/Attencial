@@ -1,6 +1,10 @@
 using Attencial.API.Data;
+using Attencial.API.Middleware;
 using Attencial.API.Repositories;
 using Attencial.API.Services;
+using Attencial.API.Validators;
+using Attencial.Shared.Dtos;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,11 +20,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient", policy =>
     {
-        policy.WithOrigins(
-                  "http://localhost:5058",
-                  "https://localhost:7251",
-                  "http://localhost:7251"
-              )
+        var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:5058", "https://localhost:7251", "http://localhost:7251" };
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -36,6 +39,22 @@ builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 
 // Services
 builder.Services.AddSingleton<IFaceService, FaceService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+
+// Distributed Cache (Redis with Memory Cache fallback)
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnectionString))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = "Attencial_";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 
 // JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -59,7 +78,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// FluentValidation Validators
+builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
+builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+builder.Services.AddScoped<IValidator<LeaveRequestCreateRequest>, LeaveRequestCreateRequestValidator>();
+builder.Services.AddScoped<IValidator<LeaveRequestReviewRequest>, LeaveRequestReviewRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateSessionRequest>, CreateSessionRequestValidator>();
+builder.Services.AddScoped<IValidator<AttendanceMarkRequest>, AttendanceMarkRequestValidator>();
+
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -69,8 +98,11 @@ if (app.Environment.IsDevelopment())
 // Must be before UseAuthentication
 app.UseCors("AllowBlazorClient");
 
+app.UseStaticFiles();
+
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 

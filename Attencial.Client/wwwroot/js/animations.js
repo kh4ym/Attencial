@@ -369,6 +369,33 @@ window.attencialAnimations = {
     }
 };
 
+// ============================================================================
+// QR Code Helper  (uses qrcodejs library loaded in index.html)
+// ============================================================================
+window.attencialQr = {
+    _instance: null,
+
+    generate: function (containerId, text) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Clear previous QR
+        container.innerHTML = '';
+        this._instance = null;
+
+        if (typeof QRCode === 'undefined') return;
+
+        this._instance = new QRCode(container, {
+            text:          text,
+            width:         200,
+            height:        200,
+            colorDark:     '#000000',
+            colorLight:    '#ffffff',
+            correctLevel:  QRCode.CorrectLevel.M
+        });
+    }
+};
+
 // CSS injection for dynamic elements
 (function () {
     const style = document.createElement('style');

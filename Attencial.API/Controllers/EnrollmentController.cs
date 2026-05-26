@@ -32,7 +32,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("status")]
-    [Authorize]
+    [Authorize(Roles = "Student")]
     public async Task<IActionResult> GetEnrollmentStatus()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -90,7 +90,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("enroll")]
-    [Authorize]
+    [Authorize(Roles = "Student")]
     public async Task<IActionResult> EnrollStudent([FromBody] EnrollRequest request)
     {
         Console.WriteLine("[EnrollmentController] EnrollStudent called");
