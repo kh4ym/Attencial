@@ -3,6 +3,10 @@ using Attencial.API.Models;
 
 namespace Attencial.API.Data;
 
+/// <summary>
+/// Primary database context for the Attencial application.
+/// Manages users, students, professors, courses, attendance, leave requests, and face vectors.
+/// </summary>
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)

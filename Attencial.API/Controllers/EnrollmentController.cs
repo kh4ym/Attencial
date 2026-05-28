@@ -20,15 +20,18 @@ public class EnrollmentController : ControllerBase
     private readonly IFaceService _faceService;
     private readonly IStudentRepository _studentRepo;
     private readonly AppDbContext _context;
+    private readonly ILogger<EnrollmentController> _logger;
 
     public EnrollmentController(
         IFaceService faceService,
         IStudentRepository studentRepo,
-        AppDbContext context)
+        AppDbContext context,
+        ILogger<EnrollmentController> logger)
     {
         _faceService = faceService;
         _studentRepo = studentRepo;
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("status")]
@@ -60,8 +63,8 @@ public class EnrollmentController : ControllerBase
                 EnrollmentStatus = student.EnrollmentStatus,
                 IsEnrolled = latestVector != null,
                 LastEnrollmentDate = latestVector?.CreatedAt,
-                DaysUntilNextUpdate = latestVector != null 
-                    ? Math.Max(0, Math.Ceiling(7 - (DateTime.UtcNow - latestVector.CreatedAt).TotalDays)) 
+                DaysUntilNextUpdate = latestVector != null
+                    ? Math.Max(0, Math.Ceiling(7 - (DateTime.UtcNow - latestVector.CreatedAt).TotalDays))
                     : 0
             }
         });
@@ -93,9 +96,9 @@ public class EnrollmentController : ControllerBase
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> EnrollStudent([FromBody] EnrollRequest request)
     {
-        Console.WriteLine("[EnrollmentController] EnrollStudent called");
+        _logger.LogInformation("EnrollStudent called");
 
-        // ── Step 1: Validate input ──────────────────────
+        // Step 1: Validate input
         if (request.Images == null || request.Images.Count != 3)
         {
             return BadRequest(new ApiResponse<string>
@@ -105,9 +108,9 @@ public class EnrollmentController : ControllerBase
             });
         }
 
-        // ── Step 2: Get the student using the JWT sub (UserId)
+        // Step 2: Get the student using the JWT sub (UserId)
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Console.WriteLine($"[EnrollmentController] JWT UserId claim: {userIdClaim}");
+        _logger.LogDebug("JWT UserId claim: {UserIdClaim}", userIdClaim);
 
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
@@ -119,7 +122,7 @@ public class EnrollmentController : ControllerBase
         }
 
         var student = await _studentRepo.GetByUserIdAsync(userId);
-        Console.WriteLine($"[EnrollmentController] Student found: {student != null}");
+        _logger.LogDebug("Student found: {Found}", student != null);
 
         if (student is null)
         {
@@ -149,7 +152,7 @@ public class EnrollmentController : ControllerBase
         {
             var latest = existingVectors.First();
             var daysSinceLastEnroll = (DateTime.UtcNow - latest.CreatedAt).TotalDays;
-            
+
             if (daysSinceLastEnroll < 7)
             {
                 var waitDays = Math.Ceiling(7 - daysSinceLastEnroll);
@@ -160,18 +163,17 @@ public class EnrollmentController : ControllerBase
                 });
             }
 
-            // If 7+ days have passed, we delete the old face records from AWS and the database
-            Console.WriteLine($"[EnrollmentController] Deleting {existingVectors.Count} old face vectors for student {student.Id}");
+            // If 7+ days have passed, delete the old face records from AWS and the database
+            _logger.LogInformation("Deleting {Count} old face vectors for student {StudentId}", existingVectors.Count, student.Id);
             foreach (var oldVector in existingVectors)
             {
                 try
                 {
                     await _faceService.DeleteFaceAsync(oldVector.RekognitionFaceId);
-                    Console.WriteLine($"[EnrollmentController] Deleted face {oldVector.RekognitionFaceId} from AWS");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[EnrollmentController] Warning: Failed to delete old face {oldVector.RekognitionFaceId} from AWS: {ex.Message}");
+                    _logger.LogWarning(ex, "Failed to delete old face {FaceId} from AWS", oldVector.RekognitionFaceId);
                 }
             }
 
@@ -180,8 +182,8 @@ public class EnrollmentController : ControllerBase
 
         try
         {
-            // ── Step 3: Detect faces in all 3 images (validation) ───────
-            Console.WriteLine("[EnrollmentController] Detecting faces...");
+            // Step 3: Detect faces in all 3 images (validation)
+            _logger.LogInformation("Detecting faces in {Count} images", request.Images.Count);
             var detectedImages = new List<string>();
 
             for (int i = 0; i < request.Images.Count; i++)
@@ -196,25 +198,23 @@ public class EnrollmentController : ControllerBase
                     });
                 }
                 detectedImages.Add(request.Images[i]);
-                Console.WriteLine($"[EnrollmentController] Face {i + 1} detected successfully");
             }
 
-            // ── Step 4: Index all 3 faces into Rekognition ─
-            Console.WriteLine("[EnrollmentController] Indexing faces into Rekognition...");
+            // Step 4: Index all 3 faces into Rekognition
+            _logger.LogInformation("Indexing faces into Rekognition");
             var rekognitionFaceIds = new List<string>();
 
             foreach (var image in detectedImages)
             {
                 try
                 {
-                    // ExternalImageId links the face to our student (student's roll number)
                     var faceId = await _faceService.IndexFaceAsync(image, student.RollNumber);
                     rekognitionFaceIds.Add(faceId);
-                    Console.WriteLine($"[EnrollmentController] Face indexed with Rekognition FaceId: {faceId}");
+                    _logger.LogDebug("Face indexed with Rekognition FaceId: {FaceId}", faceId);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[EnrollmentController] Indexing failed: {ex.Message}");
+                    _logger.LogError(ex, "Face indexing failed");
                     student.EnrollmentStatus = "Failed";
                     await _studentRepo.UpdateAsync(student);
                     await _studentRepo.SaveChangesAsync();
@@ -227,7 +227,7 @@ public class EnrollmentController : ControllerBase
                 }
             }
 
-            // ── Step 5: Save face records to database ───────
+            // Step 5: Save face records to database
             student.RekognitionExternalId = student.RollNumber;
             student.EnrollmentStatus = "Trained";
             await _studentRepo.UpdateAsync(student);
@@ -243,7 +243,7 @@ public class EnrollmentController : ControllerBase
             }
 
             await _context.SaveChangesAsync();
-            Console.WriteLine("[EnrollmentController] Enrollment complete!");
+            _logger.LogInformation("Enrollment complete for student {StudentId}", student.Id);
 
             return Ok(new ApiResponse<string>
             {
@@ -253,7 +253,7 @@ public class EnrollmentController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[EnrollmentController] Unexpected error: {ex}");
+            _logger.LogError(ex, "Unexpected error during enrollment");
             return StatusCode(500, new ApiResponse<string>
             {
                 Success = false,

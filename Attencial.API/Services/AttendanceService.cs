@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Attencial.API.Data;
 using Attencial.API.Models;
+using Attencial.Shared.Constants;
 using Attencial.Shared.Dtos;
 
 namespace Attencial.API.Services;
@@ -30,6 +31,7 @@ public class AttendanceService : IAttendanceService
     {
         // Layer 1: Token Validation
         var tokenEntity = await _context.OnlineAttendanceTokens
+            .AsNoTracking()
             .Include(t => t.Session)
                 .ThenInclude(s => s.Course)
                     .ThenInclude(c => c.Professor)
@@ -76,6 +78,7 @@ public class AttendanceService : IAttendanceService
     {
         // ── Layer 1: Token Validation ───────────────────────────────────────────
         var tokenEntity = await _context.OnlineAttendanceTokens
+            .AsNoTracking()
             .Include(t => t.Session)
                 .ThenInclude(s => s.Course)
             .FirstOrDefaultAsync(t => t.Token == request.Token && t.IsActive && t.ExpiresAt > DateTime.UtcNow);
@@ -126,6 +129,7 @@ public class AttendanceService : IAttendanceService
 
         // ── Layer 5: Student Lookup ──────────────────────────────────────────────
         var faceVector = await _context.FaceVectors
+            .AsNoTracking()
             .Include(fv => fv.Student)
             .FirstOrDefaultAsync(fv => fv.RekognitionFaceId == rekognitionFaceId);
 
@@ -160,7 +164,7 @@ public class AttendanceService : IAttendanceService
             {
                 SessionId = tokenEntity.SessionId,
                 StudentId = student.Id,
-                AbuseType = "NotEnrolledInCourse",
+                AbuseType = AppConstants.AbuseTypes.NotEnrolledInCourse,
                 Details = $"Student '{student.FullName}' (Roll: {student.RollNumber}) attempted to mark attendance for course '{tokenEntity.Session.Course.Name}' but is not enrolled.",
                 DeviceId = request.DeviceId,
                 IpAddress = ipAddress

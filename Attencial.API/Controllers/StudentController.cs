@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Attencial.API.Data;
-using Attencial.API.Models;
+using Attencial.Shared.Constants;
 using Attencial.Shared.Dtos;
 
 namespace Attencial.API.Controllers;
@@ -23,10 +23,8 @@ public class StudentController : ControllerBase
         _context = context;
     }
 
-    // ── GET /api/students/me/attendance ──────────────────────────────────────
-    // Calculates overall and per-course attendance and lists missed sessions.
     [HttpGet("me/attendance")]
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = AppConstants.Roles.Student)]
     public async Task<IActionResult> GetMyAttendance()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -36,6 +34,7 @@ public class StudentController : ControllerBase
         }
 
         var student = await _context.Students
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
         if (student is null)
@@ -43,12 +42,42 @@ public class StudentController : ControllerBase
             return NotFound(new ApiResponse<string> { Success = false, Message = "Student profile not found." });
         }
 
-        // Get enrollments for the student
+        // Single query: get all enrollments with courses and professors
         var enrollments = await _context.Enrollments
+            .AsNoTracking()
             .Include(e => e.Course)
                 .ThenInclude(c => c.Professor)
             .Where(e => e.StudentId == student.Id)
             .ToListAsync();
+
+        if (enrollments.Count == 0)
+        {
+            return Ok(new ApiResponse<StudentAttendanceSummaryDto>
+            {
+                Success = true,
+                Data = new StudentAttendanceSummaryDto
+                {
+                    OverallPercentage = 100.0,
+                    CourseAttendance = new List<StudentCourseAttendanceDto>()
+                }
+            });
+        }
+
+        var courseIds = enrollments.Select(e => e.CourseId).ToList();
+
+        // Single query: all sessions for all enrolled courses
+        var sessions = await _context.AttendanceSessions
+            .AsNoTracking()
+            .Where(s => courseIds.Contains(s.CourseId))
+            .OrderByDescending(s => s.StartTime)
+            .ToListAsync();
+
+        // Single query: all attendance records for this student across all enrolled courses
+        var attendedSessionIds = await _context.AttendanceRecords
+            .AsNoTracking()
+            .Where(ar => ar.StudentId == student.Id && courseIds.Contains(ar.Session.CourseId))
+            .Select(ar => ar.SessionId)
+            .ToHashSetAsync();
 
         var courseAttendanceList = new List<StudentCourseAttendanceDto>();
         int totalSessionsAll = 0;
@@ -57,21 +86,10 @@ public class StudentController : ControllerBase
         foreach (var enrollment in enrollments)
         {
             var course = enrollment.Course;
+            var courseSessions = sessions.Where(s => s.CourseId == course.Id).ToList();
 
-            // Get total sessions for this course
-            var sessions = await _context.AttendanceSessions
-                .Where(s => s.CourseId == course.Id)
-                .OrderByDescending(s => s.StartTime)
-                .ToListAsync();
-
-            // Get attended session records
-            var records = await _context.AttendanceRecords
-                .Where(ar => ar.StudentId == student.Id && ar.Session.CourseId == course.Id)
-                .Select(ar => ar.SessionId)
-                .ToListAsync();
-
-            int totalSessions = sessions.Count;
-            int attendedSessions = records.Count;
+            int totalSessions = courseSessions.Count;
+            int attendedSessions = courseSessions.Count(s => attendedSessionIds.Contains(s.Id));
 
             totalSessionsAll += totalSessions;
             totalAttendedAll += attendedSessions;
@@ -80,19 +98,14 @@ public class StudentController : ControllerBase
                 ? (attendedSessions / (double)totalSessions) * 100.0
                 : 100.0;
 
-            string status = "Green";
+            string status = AppConstants.AttendanceStatuses.Green;
             if (percentage < 65.0)
-            {
-                status = "Red";
-            }
+                status = AppConstants.AttendanceStatuses.Red;
             else if (percentage < 75.0)
-            {
-                status = "Yellow";
-            }
+                status = AppConstants.AttendanceStatuses.Yellow;
 
-            // Find missed sessions
-            var missedSessions = sessions
-                .Where(s => !records.Contains(s.Id))
+            var missedSessions = courseSessions
+                .Where(s => !attendedSessionIds.Contains(s.Id))
                 .Select(s => new MissedSessionDto
                 {
                     SessionId = s.Id,

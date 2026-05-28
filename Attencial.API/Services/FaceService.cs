@@ -17,6 +17,7 @@ public class FaceService : IFaceService
     private readonly AmazonRekognitionClient _client;
     private readonly string _collectionId;
     private readonly ResiliencePipeline _resiliencePipeline;
+    private bool _collectionEnsured;
 
     public FaceService(IConfiguration config)
     {
@@ -30,14 +31,10 @@ public class FaceService : IFaceService
             secretKey,
             RegionEndpoint.GetBySystemName(region));
 
-        // Ensure the collection exists (idempotent — safe to call every startup)
-        EnsureCollectionExistsAsync().GetAwaiter().GetResult();
-
-        // Build resilience pipeline (3x exponential retry + circuit breaker on 5 failures)
         _resiliencePipeline = new ResiliencePipelineBuilder()
             .AddRetry(new RetryStrategyOptions
             {
-                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => 
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex =>
                     ex is not InvalidParameterException && ex is not ResourceAlreadyExistsException),
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = true,
@@ -46,10 +43,10 @@ public class FaceService : IFaceService
             })
             .AddCircuitBreaker(new CircuitBreakerStrategyOptions
             {
-                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => 
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex =>
                     ex is not InvalidParameterException && ex is not ResourceAlreadyExistsException),
-                FailureRatio = 1.0,               // Trip if 100% of calls fail
-                MinimumThroughput = 5,            // Needs at least 5 failures to trip
+                FailureRatio = 1.0,
+                MinimumThroughput = 5,
                 SamplingDuration = TimeSpan.FromSeconds(30),
                 BreakDuration = TimeSpan.FromSeconds(30)
             })
@@ -58,6 +55,8 @@ public class FaceService : IFaceService
 
     private async Task EnsureCollectionExistsAsync()
     {
+        if (_collectionEnsured) return;
+
         try
         {
             await _client.CreateCollectionAsync(
@@ -65,12 +64,16 @@ public class FaceService : IFaceService
         }
         catch (ResourceAlreadyExistsException)
         {
-            // Collection already exists — that's fine, do nothing
+            // Collection already exists
         }
+
+        _collectionEnsured = true;
     }
 
     public async Task<string?> DetectFaceAsync(string base64Image)
     {
+        await EnsureCollectionExistsAsync();
+
         return await _resiliencePipeline.ExecuteAsync(async token =>
         {
             var imageBytes = Convert.FromBase64String(base64Image);
@@ -83,17 +86,17 @@ public class FaceService : IFaceService
                 }
             }, token);
 
-            // No face found?
             if (response.FaceDetails.Count == 0)
                 return null;
 
-            // Return a confirmation token — "detected"
             return "detected";
         });
     }
 
     public async Task<string> IndexFaceAsync(string base64Image, string externalId)
     {
+        await EnsureCollectionExistsAsync();
+
         return await _resiliencePipeline.ExecuteAsync(async token =>
         {
             var imageBytes = Convert.FromBase64String(base64Image);
@@ -101,7 +104,7 @@ public class FaceService : IFaceService
             var response = await _client.IndexFacesAsync(new IndexFacesRequest
             {
                 CollectionId    = _collectionId,
-                ExternalImageId = externalId,   // e.g. student's roll number
+                ExternalImageId = externalId,
                 Image = new Image
                 {
                     Bytes = new MemoryStream(imageBytes)
@@ -113,13 +116,14 @@ public class FaceService : IFaceService
             if (response.FaceRecords.Count == 0)
                 throw new InvalidOperationException("No face could be indexed in this image.");
 
-            // Return the Rekognition-assigned FaceId (a GUID string)
             return response.FaceRecords[0].Face.FaceId;
         });
     }
 
     public async Task DeleteFaceAsync(string rekognitionFaceId)
     {
+        await EnsureCollectionExistsAsync();
+
         await _resiliencePipeline.ExecuteAsync(async token =>
         {
             await _client.DeleteFacesAsync(new DeleteFacesRequest
@@ -132,6 +136,8 @@ public class FaceService : IFaceService
 
     public async Task<(string? faceId, double similarity)> SearchFaceAsync(string base64Image)
     {
+        await EnsureCollectionExistsAsync();
+
         return await _resiliencePipeline.ExecuteAsync(async token =>
         {
             var imageBytes = Convert.FromBase64String(base64Image);
@@ -148,12 +154,11 @@ public class FaceService : IFaceService
                             Bytes = new MemoryStream(imageBytes)
                         },
                         MaxFaces           = 1,
-                        FaceMatchThreshold = 70F  // pre-filter at 70% on AWS side
+                        FaceMatchThreshold = 70F
                     }, token);
             }
             catch (InvalidParameterException)
             {
-                // No face detected in the query image
                 return (null, 0);
             }
 

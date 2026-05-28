@@ -1,5 +1,6 @@
 using Attencial.API.Data;
 using Attencial.API.Models;
+using Attencial.Shared.Constants;
 using Attencial.Shared.Dtos;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -51,6 +52,7 @@ public class AuthController : ControllerBase
 
         // Check if email already exists
         var existingUser = await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (existingUser is not null)
@@ -76,7 +78,7 @@ public class AuthController : ControllerBase
         await _context.SaveChangesAsync();
 
         // If registering as a Student, also create the Student profile
-        if (request.Role.Equals("Student", StringComparison.OrdinalIgnoreCase))
+        if (request.Role.Equals(AppConstants.Roles.Student, StringComparison.OrdinalIgnoreCase))
         {
             var student = new Student
             {
@@ -123,6 +125,7 @@ public class AuthController : ControllerBase
 
         // Find user by email
         var user = await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         // Verify password against stored hash
@@ -154,7 +157,7 @@ public class AuthController : ControllerBase
                 {
                     SessionId = null,
                     StudentId = null,
-                    AbuseType = "Brute Force Login Lockout",
+                    AbuseType = AppConstants.AbuseTypes.BruteForceLoginLockout,
                     Details = $"Account locked out due to 10 consecutive failed login attempts. Tried email: {request.Email}",
                     IpAddress = ipAddress,
                     CreatedAt = DateTime.UtcNow

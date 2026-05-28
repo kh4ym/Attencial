@@ -2,6 +2,9 @@ using Attencial.API.Models;
 
 namespace Attencial.API.Repositories;
 
+/// <summary>
+/// Data access for Student entities with associated User navigation.
+/// </summary>
 public interface IStudentRepository
 {
     Task<Student?> GetByIdAsync(int id);

@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 
 namespace Attencial.API.Middleware;
 
+/// <summary>
+/// Catches unhandled exceptions globally. Returns RFC 7807 Problem Details responses.
+/// ValidationExceptions become 400, all others become 500 (with stack trace in development).
+/// </summary>
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;

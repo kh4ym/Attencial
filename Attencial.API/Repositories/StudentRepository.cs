@@ -16,6 +16,7 @@ public class StudentRepository : IStudentRepository
     public async Task<Student?> GetByIdAsync(int id)
     {
         return await _context.Students
+            .AsNoTracking()
             .Include(s => s.User)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
@@ -23,6 +24,7 @@ public class StudentRepository : IStudentRepository
     public async Task<Student?> GetByUserIdAsync(int userId)
     {
         return await _context.Students
+            .AsNoTracking()
             .Include(s => s.User)
             .FirstOrDefaultAsync(s => s.UserId == userId);
     }
@@ -30,18 +32,21 @@ public class StudentRepository : IStudentRepository
     public async Task<List<Student>> GetAllAsync()
     {
         return await _context.Students
+            .AsNoTracking()
             .Include(s => s.User)
             .ToListAsync();
     }
 
-    public async Task AddAsync(Student student)
+    public Task AddAsync(Student student)
     {
         _context.Students.Add(student);
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(Student student)
+    public Task UpdateAsync(Student student)
     {
         _context.Students.Update(student);
+        return Task.CompletedTask;
     }
 
     public async Task SaveChangesAsync()
