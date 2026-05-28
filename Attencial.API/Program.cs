@@ -81,8 +81,6 @@ builder.Services.AddAuthorization();
 // FluentValidation Validators
 builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
 builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
-builder.Services.AddScoped<IValidator<LeaveRequestCreateRequest>, LeaveRequestCreateRequestValidator>();
-builder.Services.AddScoped<IValidator<LeaveRequestReviewRequest>, LeaveRequestReviewRequestValidator>();
 builder.Services.AddScoped<IValidator<CreateSessionRequest>, CreateSessionRequestValidator>();
 builder.Services.AddScoped<IValidator<AttendanceMarkRequest>, AttendanceMarkRequestValidator>();
 

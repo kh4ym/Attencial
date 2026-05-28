@@ -56,13 +56,6 @@ namespace Attencial.Client.Layout
 				__builder.AddAttribute(16, "b-c8fp1rjic8");
 				__builder.AddContent(17, "Dashboard");
 				__builder.CloseElement();
-				__builder.AddMarkupContent(18, "\n                    ");
-				__builder.OpenElement(19, "a");
-				__builder.AddAttribute(20, "href", "profile");
-				__builder.AddAttribute(21, "class", "font-label-caps text-label-caps " + (GetActive("profile") ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary") + " transition-colors no-underline");
-				__builder.AddAttribute(22, "b-c8fp1rjic8");
-				__builder.AddContent(23, "Profile");
-				__builder.CloseElement();
 				if (userRole == "Professor")
 				{
 					__builder.OpenElement(24, "a");
@@ -71,21 +64,6 @@ namespace Attencial.Client.Layout
 					__builder.AddAttribute(27, "b-c8fp1rjic8");
 					__builder.AddContent(28, "Start Session");
 					__builder.CloseElement();
-					__builder.AddMarkupContent(29, "\n                        ");
-					__builder.OpenElement(30, "a");
-					__builder.AddAttribute(31, "href", "faculty/check-in");
-					__builder.AddAttribute(32, "class", "font-label-caps text-label-caps " + (GetActive("faculty/check-in") ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary") + " transition-colors no-underline");
-					__builder.AddAttribute(33, "b-c8fp1rjic8");
-					__builder.AddContent(34, "Faculty HR");
-					__builder.CloseElement();
-					__builder.AddMarkupContent(35, "\n                        ");
-					__builder.OpenElement(36, "a");
-					__builder.AddAttribute(37, "href", "leave-requests");
-					__builder.AddAttribute(38, "class", "font-label-caps text-label-caps " + (GetActive("leave-requests") ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary") + " transition-colors no-underline");
-					__builder.AddAttribute(39, "b-c8fp1rjic8");
-					__builder.AddContent(40, "Leave");
-					__builder.CloseElement();
-					__builder.AddMarkupContent(41, "\n                        ");
 					__builder.OpenElement(42, "a");
 					__builder.AddAttribute(43, "href", "enrollment-review");
 					__builder.AddAttribute(44, "class", "font-label-caps text-label-caps " + (GetActive("enrollment-review") ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary") + " transition-colors no-underline");
@@ -118,12 +96,13 @@ namespace Attencial.Client.Layout
 			__builder.AddAttribute(61, "b-c8fp1rjic8");
 			if (isLoggedIn)
 			{
-				__builder.AddMarkupContent(62, "<span class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer\" b-c8fp1rjic8>notifications</span>\n                ");
+				__builder.AddMarkupContent(62, "<a href=\"profile\" class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" b-c8fp1rjic8 title=\"Profile\">person</a>\n                ");
 				__builder.OpenElement(63, "button");
 				__builder.AddAttribute(64, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)Logout));
-				__builder.AddAttribute(65, "class", "font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer");
+				__builder.AddAttribute(65, "class", "material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer");
 				__builder.AddAttribute(66, "b-c8fp1rjic8");
-				__builder.AddContent(67, "LOGOUT");
+				__builder.AddAttribute(67, "title", "Logout");
+				__builder.AddContent(68, "logout");
 				__builder.CloseElement();
 			}
 			else

@@ -44,7 +44,7 @@ namespace Attencial.Client.Pages
 			__builder.AddMarkupContent(12, "<a href=\"/\" class=\"flex items-center gap-3 no-underline group\"><div class=\"w-10 h-10 border-2 border-primary flex items-center justify-center relative\"><span class=\"material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform\">visibility</span>\n                        <div class=\"absolute -top-[2px] -right-[2px] w-2 h-2 bg-primary rounded-full\"></div></div>\n                    <div class=\"flex flex-col leading-none\"><span class=\"font-display-lg text-headline-md font-bold text-on-surface tracking-tighter\">Attencial</span>\n                        <span class=\"font-label-caps text-[8px] text-primary tracking-[0.2em] mt-0.5\">ACADEMIC</span></div></a>");
 			if (isLoggedIn)
 			{
-				__builder.AddMarkupContent(13, "<div class=\"hidden md:flex gap-8\"><a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"dashboard\">Dashboard</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"session\">Start Session</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"leave-requests\">Leave Requests</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"professor-dashboard\">Analytics</a></div>");
+				__builder.AddMarkupContent(13, "<div class=\"hidden md:flex gap-8\"><a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"dashboard\">Dashboard</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"session\">Start Session</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"professor-dashboard\">Analytics</a></div>");
 			}
 			__builder.CloseElement();
 			__builder.AddMarkupContent(14, "\n            ");
@@ -52,8 +52,7 @@ namespace Attencial.Client.Pages
 			__builder.AddAttribute(16, "class", "flex items-center gap-4 md:gap-6");
 			if (isLoggedIn)
 			{
-				__builder.AddMarkupContent(17, "<div class=\"flex gap-4\"><button class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer\">notifications</button>\n                        <button class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer\">settings</button></div>\n                    <div class=\"h-8 w-[1px] bg-outline-variant/30 hidden md:block\"></div>\n                    ");
-				__builder.AddMarkupContent(18, "<a class=\"font-label-caps text-label-caps text-on-surface hover:text-primary transition-colors no-underline\" href=\"dashboard\">Profile</a>");
+				__builder.AddMarkupContent(18, "<a class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" href=\"profile\" title=\"Profile\">person</a>");
 			}
 			else
 			{
