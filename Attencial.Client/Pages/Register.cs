@@ -127,7 +127,7 @@ namespace Attencial.Client.Pages
 				__builder.OpenElement(60, "input");
 				__builder.AddAttribute(61, "class", "w-full bg-transparent border-t-0 border-x-0 border-b border-on-surface px-0 py-2 focus:ring-0 focus:border-brand-coral focus:border-b-2 placeholder:text-surface-container-highest transition-all outline-none font-body-md");
 				__builder.AddAttribute(62, "id", "fullName");
-				__builder.AddAttribute(63, "placeholder", (role == "Student") ? "Alexander Thorne" : "Dr. Julian Thorne");
+				__builder.AddAttribute(63, "placeholder", "Full Name");
 				__builder.AddAttribute(64, "type", "text");
 				__builder.AddAttribute(65, "required");
 				__builder.AddAttribute(66, "value", BindConverter.FormatValue(fullName));

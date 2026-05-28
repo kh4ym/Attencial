@@ -15,6 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// Response compression (Brotli + Gzip)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -30,8 +36,8 @@ builder.Services.AddCors(options =>
 });
 
 // Database
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContextPool<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")), poolSize: 128);
 
 // Repositories
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
@@ -86,6 +92,7 @@ builder.Services.AddScoped<IValidator<AttendanceMarkRequest>, AttendanceMarkRequ
 
 var app = builder.Build();
 
+app.UseResponseCompression();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())

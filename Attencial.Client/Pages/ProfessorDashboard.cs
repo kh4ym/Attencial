@@ -147,15 +147,11 @@ namespace Attencial.Client.Pages
 
 		private int pendingEnrollments;
 
-		private int pendingLeaves;
 
 		private int pendingAppealCount;
 
-		private bool facultyCheckedIn;
 
-		private DateTime facultyCheckInTime = DateTime.MinValue;
 
-		private double facultyTodayHours;
 
 		private int sessionToDelete;
 
@@ -262,55 +258,24 @@ namespace Attencial.Client.Pages
 				__builder.AddMarkupContent(52, "\n                ");
 				__builder.OpenElement(53, "div");
 				__builder.AddAttribute(54, "class", "stat-neo stagger-3");
-				__builder.AddMarkupContent(55, "<span class=\"stat-neo-label\">Pending Reviews</span>\n                    ");
+				__builder.AddMarkupContent(55, "<span class=\"stat-neo-label\">Pending Enrollments</span>\n                    ");
 				__builder.OpenElement(56, "span");
 				__builder.AddAttribute(57, "class", "stat-neo-value");
-				__builder.AddContent(58, pendingEnrollments + pendingLeaves);
+				__builder.AddContent(58, pendingEnrollments);
 				__builder.CloseElement();
 				__builder.AddMarkupContent(59, "\n                    ");
 				__builder.OpenElement(60, "div");
 				__builder.AddAttribute(61, "class", "mt-4 flex items-center gap-1 font-label-caps text-label-sm");
 				__builder.OpenElement(62, "span");
 				__builder.AddAttribute(63, "class", "material-symbols-outlined text-sm");
-				__builder.AddContent(64, (pendingEnrollments + pendingLeaves > 0) ? "flag" : "check_circle");
+				__builder.AddContent(64, (pendingEnrollments > 0) ? "flag" : "check_circle");
 				__builder.CloseElement();
 				__builder.AddMarkupContent(65, "\n                        ");
 				__builder.AddContent(66, pendingEnrollments);
-				__builder.AddContent(67, " enrollments, ");
-				__builder.AddContent(68, pendingLeaves);
-				__builder.AddMarkupContent(69, " leaves\n                    ");
+				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.AddMarkupContent(70, "\n                ");
-				__builder.OpenElement(71, "div");
-				__builder.AddAttribute(72, "class", "stat-neo stagger-4");
-				__builder.AddMarkupContent(73, "<span class=\"stat-neo-label\">Faculty Status</span>\n                    ");
-				__builder.OpenElement(74, "span");
-				__builder.AddAttribute(75, "class", "stat-neo-value text-xl");
-				__builder.AddContent(76, facultyCheckedIn ? "In" : "Out");
-				__builder.CloseElement();
-				__builder.AddMarkupContent(77, "\n                    ");
-				__builder.OpenElement(78, "div");
-				__builder.AddAttribute(79, "class", "mt-4 flex items-center gap-1 font-label-caps text-label-sm");
-				__builder.OpenElement(80, "span");
-				__builder.AddAttribute(81, "class", "material-symbols-outlined text-sm");
-				__builder.AddContent(82, facultyCheckedIn ? "how_to_reg" : "logout");
-				__builder.CloseElement();
-				if (facultyCheckedIn)
-				{
-					__builder.OpenElement(83, "span");
-					__builder.AddContent(84, "Since ");
-					__builder.AddContent(85, facultyCheckInTime.ToLocalTime().ToString("hh:mm tt"));
-					__builder.CloseElement();
-				}
-				else
-				{
-					__builder.OpenElement(86, "span");
-					__builder.AddContent(87, (facultyTodayHours > 0.0) ? $"{facultyTodayHours}h today" : "Not checked in");
-					__builder.CloseElement();
-				}
-				__builder.CloseElement();
-				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.AddMarkupContent(88, "\n\n            ");
 				__builder.OpenElement(89, "div");
@@ -767,46 +732,6 @@ namespace Attencial.Client.Pages
 				__builder.AddMarkupContent(341, "\n\n                ");
 				__builder.OpenElement(342, "div");
 				__builder.AddAttribute(343, "class", "space-y-gutter");
-				__builder.OpenElement(344, "div");
-				__builder.AddAttribute(345, "class", "card-neo");
-				__builder.AddMarkupContent(346, "<h3 class=\"font-label-caps text-label-caps text-on-surface mb-4 border-b border-outline-variant/20 pb-3\">My Attendance</h3>\n                        ");
-				__builder.OpenElement(347, "div");
-				__builder.AddAttribute(348, "class", "text-center mb-4");
-				if (facultyCheckedIn)
-				{
-					__builder.AddMarkupContent(349, "<span class=\"material-symbols-outlined text-4xl text-tertiary block mb-2\">how_to_reg</span>\n                                ");
-					__builder.AddMarkupContent(350, "<p class=\"font-body-md text-on-surface\">Checked In</p>\n                                ");
-					__builder.OpenElement(351, "p");
-					__builder.AddAttribute(352, "class", "font-label-sm text-on-surface-variant");
-					__builder.AddContent(353, "Since ");
-					__builder.AddContent(354, facultyCheckInTime.ToLocalTime().ToString("hh:mm tt"));
-					__builder.CloseElement();
-				}
-				else
-				{
-					__builder.AddMarkupContent(355, "<span class=\"material-symbols-outlined text-4xl text-on-surface-variant/30 block mb-2\">logout</span>\n                                ");
-					__builder.AddMarkupContent(356, "<p class=\"font-body-md text-on-surface\">Not Checked In</p>");
-				}
-				if (facultyTodayHours > 0.0)
-				{
-					__builder.OpenElement(357, "p");
-					__builder.AddAttribute(358, "class", "font-label-sm text-on-surface-variant mt-1");
-					__builder.AddContent(359, facultyTodayHours.ToString("F1"));
-					__builder.AddContent(360, "h worked today");
-					__builder.CloseElement();
-				}
-				__builder.CloseElement();
-				__builder.AddMarkupContent(361, "\n                        ");
-				__builder.OpenElement(362, "a");
-				__builder.AddAttribute(363, "href", "faculty/check-in");
-				__builder.AddAttribute(364, "class", "btn-neo-outline w-full no-underline text-sm flex items-center justify-center gap-2");
-				__builder.OpenElement(365, "span");
-				__builder.AddAttribute(366, "class", "material-symbols-outlined text-lg");
-				__builder.AddContent(367, facultyCheckedIn ? "logout" : "how_to_reg");
-				__builder.CloseElement();
-				__builder.AddMarkupContent(368, "\n                            ");
-				__builder.AddContent(369, facultyCheckedIn ? "Check Out" : "Check In");
-				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.AddMarkupContent(370, "\n\n                    ");
 				__builder.OpenElement(371, "button");
@@ -833,22 +758,8 @@ namespace Attencial.Client.Pages
 				__builder.AddContent(389, pendingEnrollments);
 				__builder.CloseElement();
 				__builder.CloseElement();
-				__builder.CloseElement();
-				__builder.AddMarkupContent(390, "\n\n                    ");
-				__builder.OpenElement(391, "a");
-				__builder.AddAttribute(392, "href", "admin/leave-review");
-				__builder.AddAttribute(393, "class", "card-neo no-underline block w-full text-left");
-				__builder.OpenElement(394, "div");
-				__builder.AddAttribute(395, "class", "flex justify-between items-center");
-				__builder.AddMarkupContent(396, "<div class=\"flex items-center gap-3\"><span class=\"material-symbols-outlined text-2xl text-primary group-hover:scale-110 transition-transform\">event_busy</span>\n                                <div><h3 class=\"font-label-caps text-label-caps text-on-surface\">Leave Requests</h3>\n                                    <p class=\"font-label-sm text-on-surface-variant\">Approve or reject leaves</p></div></div>\n                            ");
-				__builder.OpenElement(397, "span");
-				__builder.AddAttribute(398, "class", "badge-neo " + ((pendingLeaves > 0) ? "badge-neo-active" : ""));
-				__builder.AddContent(399, pendingLeaves);
-				__builder.CloseElement();
-				__builder.CloseElement();
-				__builder.CloseElement();
 				__builder.AddMarkupContent(400, "\n\n                    ");
-				__builder.AddMarkupContent(401, "<div class=\"card-neo\"><h3 class=\"font-label-caps text-label-caps text-on-surface mb-4 border-b border-outline-variant/20 pb-3\">Quick Actions</h3>\n                        <div class=\"space-y-3\"><a href=\"session\" class=\"btn-neo-primary w-full no-underline text-sm flex items-center justify-center gap-2\"><span class=\"material-symbols-outlined text-lg\">play_circle</span> Start New Session\n                            </a>\n                            <a href=\"leave-requests\" class=\"btn-neo-outline w-full no-underline text-sm flex items-center justify-center gap-2\"><span class=\"material-symbols-outlined text-lg\">edit_calendar</span> Submit Leave\n                            </a></div></div>");
+				__builder.AddMarkupContent(401, "<div class=\"card-neo\"><h3 class=\"font-label-caps text-label-caps text-on-surface mb-4 border-b border-outline-variant/20 pb-3\">Quick Actions</h3>\n                        <div class=\"space-y-3\"><a href=\"session\" class=\"btn-neo-primary w-full no-underline text-sm flex items-center justify-center gap-2\"><span class=\"material-symbols-outlined text-lg\">play_circle</span> Start New Session\n                            </a></div></div>");
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
@@ -1025,15 +936,6 @@ namespace Attencial.Client.Pages
 						using JsonDocument jsonDocument4 = JsonDocument.Parse(await httpResponseMessage4.Content.ReadAsStringAsync());
 						pendingEnrollments = jsonDocument4.RootElement.GetProperty("data").EnumerateArray().Count();
 					}
-					HttpRequestMessage httpRequestMessage5 = new HttpRequestMessage(HttpMethod.Get, "api/admin/leave/pending");
-					httpRequestMessage5.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-					HttpResponseMessage httpResponseMessage5 = await Http.SendAsync(httpRequestMessage5);
-					if (httpResponseMessage5.IsSuccessStatusCode)
-					{
-						using JsonDocument jsonDocument5 = JsonDocument.Parse(await httpResponseMessage5.Content.ReadAsStringAsync());
-						pendingLeaves = jsonDocument5.RootElement.GetProperty("data").EnumerateArray().Count();
-					}
-					await LoadFacultyStatus();
 					await CheckFaceEnrollment();
 				}
 				else if (httpResponseMessage.StatusCode == HttpStatusCode.NotFound)
@@ -1081,34 +983,6 @@ namespace Attencial.Client.Pages
 			}
 		}
 
-		private async Task LoadFacultyStatus()
-		{
-			_ = 1;
-			try
-			{
-				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "api/faculty/status");
-				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-				HttpResponseMessage httpResponseMessage = await Http.SendAsync(httpRequestMessage);
-				if (!httpResponseMessage.IsSuccessStatusCode)
-				{
-					return;
-				}
-				using JsonDocument jsonDocument = JsonDocument.Parse(await httpResponseMessage.Content.ReadAsStringAsync());
-				JsonElement property = jsonDocument.RootElement.GetProperty("data");
-				facultyCheckedIn = property.GetProperty("isCheckedIn").GetBoolean();
-				if (facultyCheckedIn && property.GetProperty("checkInTime").ValueKind != JsonValueKind.Null)
-				{
-					facultyCheckInTime = property.GetProperty("checkInTime").GetDateTime();
-				}
-				if (property.GetProperty("todayHours").ValueKind != JsonValueKind.Null)
-				{
-					facultyTodayHours = property.GetProperty("todayHours").GetDouble();
-				}
-			}
-			catch
-			{
-			}
-		}
 
 		private async Task ToggleCourse(int courseId)
 		{

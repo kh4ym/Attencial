@@ -257,7 +257,7 @@ namespace Attencial.Client.Pages
 					{
 						string a = jsonDocument.RootElement.GetProperty("data").GetProperty("role").GetString() ?? "";
 						isProfessor = string.Equals(a, "Professor", StringComparison.OrdinalIgnoreCase);
-						submitEndpoint = (isProfessor ? "api/faculty/enroll" : "api/enrollment/enroll");
+						submitEndpoint = (isProfessor ? "api/faculty/register-face" : "api/enrollment/enroll");
 						return;
 					}
 				}

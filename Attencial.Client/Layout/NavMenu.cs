@@ -114,6 +114,69 @@ namespace Attencial.Client.Layout
 			__builder.CloseElement();
 			__builder.CloseElement();
 			__builder.AddMarkupContent(70, "\n\n<div class=\"h-16\" b-c8fp1rjic8></div>");
+
+			// Mobile bottom navigation bar
+			if (isLoggedIn)
+			{
+				__builder.OpenElement(71, "nav");
+				__builder.AddAttribute(72, "class", "mobile-nav");
+				__builder.AddAttribute(73, "b-c8fp1rjic8");
+				__builder.OpenElement(74, "div");
+				__builder.AddAttribute(75, "class", "mobile-nav-inner");
+				__builder.AddAttribute(76, "b-c8fp1rjic8");
+
+				// Home
+				__builder.OpenElement(77, "a");
+				__builder.AddAttribute(78, "href", "/");
+				__builder.AddAttribute(79, "class", "mobile-nav-item " + (GetActive("") ? "active" : ""));
+				__builder.AddAttribute(80, "b-c8fp1rjic8");
+				__builder.AddMarkupContent(81, "<span class=\"material-symbols-outlined nav-icon\">home</span>\n                    <span class=\"nav-label\">Home</span>");
+				__builder.CloseElement();
+
+				// Dashboard
+				var dashHref = userRole == "Professor" ? "professor-dashboard" : "dashboard";
+				__builder.OpenElement(82, "a");
+				__builder.AddAttribute(83, "href", dashHref);
+				__builder.AddAttribute(84, "class", "mobile-nav-item " + (GetActive(dashHref) ? "active" : ""));
+				__builder.AddAttribute(85, "b-c8fp1rjic8");
+				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">Dashboard</span>");
+				__builder.CloseElement();
+
+				if (userRole == "Professor")
+				{
+					// Session
+					__builder.OpenElement(87, "a");
+					__builder.AddAttribute(88, "href", "session");
+					__builder.AddAttribute(89, "class", "mobile-nav-item " + (GetActive("session") ? "active" : ""));
+					__builder.AddAttribute(90, "b-c8fp1rjic8");
+					__builder.AddMarkupContent(91, "<span class=\"material-symbols-outlined nav-icon\">play_circle</span>\n                    <span class=\"nav-label\">Session</span>");
+					__builder.CloseElement();
+				}
+				else
+				{
+					// Courses
+					__builder.OpenElement(92, "a");
+					__builder.AddAttribute(93, "href", "courses");
+					__builder.AddAttribute(94, "class", "mobile-nav-item " + (GetActive("courses") ? "active" : ""));
+					__builder.AddAttribute(95, "b-c8fp1rjic8");
+					__builder.AddMarkupContent(96, "<span class=\"material-symbols-outlined nav-icon\">school</span>\n                    <span class=\"nav-label\">Courses</span>");
+					__builder.CloseElement();
+				}
+
+				if (userRole == "Professor")
+				{
+					// Review
+					__builder.OpenElement(97, "a");
+					__builder.AddAttribute(98, "href", "enrollment-review");
+					__builder.AddAttribute(99, "class", "mobile-nav-item " + (GetActive("enrollment-review") ? "active" : ""));
+					__builder.AddAttribute(100, "b-c8fp1rjic8");
+					__builder.AddMarkupContent(101, "<span class=\"material-symbols-outlined nav-icon\">rate_review</span>\n                    <span class=\"nav-label\">Review</span>");
+					__builder.CloseElement();
+				}
+
+				__builder.CloseElement();
+				__builder.CloseElement();
+			}
 		}
 
 		protected override async Task OnInitializedAsync()

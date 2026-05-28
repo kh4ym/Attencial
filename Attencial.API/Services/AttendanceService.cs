@@ -32,6 +32,7 @@ public class AttendanceService : IAttendanceService
         // Layer 1: Token Validation
         var tokenEntity = await _context.OnlineAttendanceTokens
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(t => t.Session)
                 .ThenInclude(s => s.Course)
                     .ThenInclude(c => c.Professor)
@@ -79,6 +80,7 @@ public class AttendanceService : IAttendanceService
         // ── Layer 1: Token Validation ───────────────────────────────────────────
         var tokenEntity = await _context.OnlineAttendanceTokens
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(t => t.Session)
                 .ThenInclude(s => s.Course)
             .FirstOrDefaultAsync(t => t.Token == request.Token && t.IsActive && t.ExpiresAt > DateTime.UtcNow);

@@ -656,3 +656,183 @@ select option:checked {
 .chevron-icon:hover {
     animation: chevron-bounce 0.6s ease infinite;
 }
+
+/* ==========================================================================
+   Mobile-First Responsive Overrides (≤768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+
+    /* ── Card padding: 32px → 20px ───────────────────────────────── */
+    .card-neo,
+    .card-neo-raised,
+    .card-neo-hover {
+        padding: 1.25rem;
+    }
+
+    /* ── Stat cards: 2×2 grid, smaller values ────────────────────── */
+    .stat-neo {
+        padding: 1rem;
+    }
+    .stat-neo-value {
+        font-size: 1.75rem;
+    }
+    .stat-neo-label {
+        font-size: 0.65rem;
+    }
+
+    /* ── Tables → card rows on mobile ────────────────────────────── */
+    .table-neo,
+    .table-neo thead,
+    .table-neo tbody,
+    .table-neo th,
+    .table-neo td,
+    .table-neo tr {
+        display: block;
+    }
+    .table-neo thead {
+        display: none;
+    }
+    .table-neo tr {
+        border: 1px solid rgba(27, 28, 26, 0.15);
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: #fbf9f6;
+    }
+    .table-neo td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(27, 28, 26, 0.05);
+        font-size: 14px;
+    }
+    .table-neo td:last-child {
+        border-bottom: none;
+    }
+    .table-neo td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #5a413f;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    /* ── Hero: scale down decorative shapes ─────────────────────── */
+    .geometric-accent {
+        transform: scale(0.5);
+        opacity: 0.6;
+    }
+
+
+    /* ── QR wrapper: full-width ──────────────────────────────────── */
+    .qr-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .qr-wrapper img,
+    .qr-wrapper canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 280px;
+    }
+
+    /* ── Countdown digits: smaller on mobile ─────────────────────── */
+    .countdown-digits {
+        font-size: 1.5rem;
+    }
+
+    /* ── Touch optimization ──────────────────────────────────────── */
+    button, a, select, input[type="submit"], input[type="button"] {
+        touch-action: manipulation;
+    }
+
+    /* ── Bottom spacing for mobile nav bar ───────────────────────── */
+    body {
+        padding-bottom: 72px;
+    }
+
+    /* ── Filter tabs: scrollable row ─────────────────────────────── */
+    .filter-tabs-mobile {
+        display: flex;
+        overflow-x: auto;
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .filter-tabs-mobile::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Bottom Mobile Navigation Bar (visible < 768px)
+   ========================================================================== */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #fbf9f6;
+    border-top: 1px solid rgba(27, 28, 26, 0.12);
+    padding: 4px 0 env(safe-area-inset-bottom, 8px) 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+@media (max-width: 768px) {
+    .mobile-nav {
+        display: flex;
+    }
+}
+
+.mobile-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    min-width: 56px;
+    min-height: 48px;
+    justify-content: center;
+    color: #5a413f;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 8px;
+}
+
+.mobile-nav-item:active {
+    background: rgba(176, 37, 43, 0.06);
+}
+
+.mobile-nav-item.active {
+    color: #b0252b;
+}
+
+.mobile-nav-item .nav-icon {
+    font-size: 22px;
+}
+
+.mobile-nav-item .nav-label {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}

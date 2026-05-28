@@ -77,7 +77,7 @@ namespace Attencial.Client.Pages
 			__builder.AddAttribute(25, "class", "space-y-5");
 			__builder.OpenElement(26, "div");
 			__builder.AddAttribute(27, "class", "relative group");
-			__builder.AddMarkupContent(28, "<label class=\"block font-label-caps text-label-caps mb-1 text-on-surface-variant group-focus-within:text-primary transition-colors\">UNIVERSITY EMAIL</label>\n                        ");
+			__builder.AddMarkupContent(28, "<label class=\"block font-label-caps text-label-caps mb-1 text-on-surface-variant group-focus-within:text-primary transition-colors\">EMAIL</label>\n                        ");
 			__builder.OpenElement(29, "input");
 			__builder.AddAttribute(30, "class", "w-full bg-transparent border-0 border-b border-on-surface-variant/40 focus:ring-0 focus:border-primary focus:border-b-2 transition-all py-1.5 px-0 font-body-md placeholder:text-on-surface-variant/30");
 			__builder.AddAttribute(31, "placeholder", "name@academic.edu");
@@ -165,7 +165,7 @@ namespace Attencial.Client.Pages
 			__builder.CloseElement();
 			__builder.CloseElement();
 			__builder.AddMarkupContent(84, "\n\n                ");
-			__builder.AddMarkupContent(85, "<div class=\"mt-6 pt-5 border-t border-outline-variant/20 flex flex-col items-center gap-3\"><p class=\"font-body-md text-sm text-on-surface-variant\">New to the faculty system?</p>\n                    <a href=\"register\" class=\"font-label-caps text-label-caps text-on-surface border border-on-surface px-8 py-2.5 hover:bg-surface-variant transition-colors no-underline\">\n                        CREATE ACCOUNT\n                    </a></div>");
+			__builder.AddMarkupContent(85, "<div class=\"mt-6 pt-5 border-t border-outline-variant/20 flex flex-col items-center gap-3\"><p class=\"font-body-md text-sm text-on-surface-variant\">New to Attencial?</p>\n                    <a href=\"register\" class=\"font-label-caps text-label-caps text-on-surface border border-on-surface px-8 py-2.5 hover:bg-surface-variant transition-colors no-underline\">\n                        CREATE ACCOUNT\n                    </a></div>");
 			__builder.CloseElement();
 			__builder.CloseElement();
 			__builder.CloseElement();
