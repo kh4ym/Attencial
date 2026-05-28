@@ -13,7 +13,7 @@
 
 /* ── Prevent auto-focus outline on page load ──────────────────────────── */
 *:focus-visible { outline: none; }
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #b0252b; outline-offset: 2px; }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid #b0252b; outline-offset: 2px; }
 
 /* ── Canvas Background ─────────────────────────────────────────────────── */
 .canvas-bg {
@@ -720,14 +720,18 @@ select option:checked {
         flex-shrink: 0;
     }
 
-    /* ── Hero: scale down decorative shapes ─────────────────────── */
+    /* ── Hero: scale down decorative shapes, hide floating circles ── */
     .geometric-accent {
         transform: scale(0.5);
         opacity: 0.6;
     }
+    .floating-slow,
+    .floating-medium,
+    .floating-fast {
+        display: none;
+    }
 
-
-    /* ── QR wrapper: full-width ──────────────────────────────────── */
+    /* ── QR wrapper: full-width + centered ────────────────────────── */
     .qr-wrapper {
         width: 100%;
         display: flex;

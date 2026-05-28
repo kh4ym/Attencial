@@ -125,21 +125,15 @@ namespace Attencial.Client.Layout
 				__builder.AddAttribute(75, "class", "mobile-nav-inner");
 				__builder.AddAttribute(76, "b-c8fp1rjic8");
 
-				// Home
-				__builder.OpenElement(77, "a");
-				__builder.AddAttribute(78, "href", "/");
-				__builder.AddAttribute(79, "class", "mobile-nav-item " + (GetActive("") ? "active" : ""));
-				__builder.AddAttribute(80, "b-c8fp1rjic8");
-				__builder.AddMarkupContent(81, "<span class=\"material-symbols-outlined nav-icon\">home</span>\n                    <span class=\"nav-label\">Home</span>");
-				__builder.CloseElement();
 
-				// Dashboard
+				// Dashboard / Analytics
 				var dashHref = userRole == "Professor" ? "professor-dashboard" : "dashboard";
+				var dashLabel = userRole == "Professor" ? "Analytics" : "Dashboard";
 				__builder.OpenElement(82, "a");
 				__builder.AddAttribute(83, "href", dashHref);
 				__builder.AddAttribute(84, "class", "mobile-nav-item " + (GetActive(dashHref) ? "active" : ""));
 				__builder.AddAttribute(85, "b-c8fp1rjic8");
-				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">Dashboard</span>");
+				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">" + dashLabel + "</span>");
 				__builder.CloseElement();
 
 				if (userRole == "Professor")
@@ -160,6 +154,17 @@ namespace Attencial.Client.Layout
 					__builder.AddAttribute(94, "class", "mobile-nav-item " + (GetActive("courses") ? "active" : ""));
 					__builder.AddAttribute(95, "b-c8fp1rjic8");
 					__builder.AddMarkupContent(96, "<span class=\"material-symbols-outlined nav-icon\">school</span>\n                    <span class=\"nav-label\">Courses</span>");
+					__builder.CloseElement();
+				}
+
+				// Profile (students only)
+				if (userRole != "Professor")
+				{
+					__builder.OpenElement(101, "a");
+					__builder.AddAttribute(102, "href", "profile");
+					__builder.AddAttribute(103, "class", "mobile-nav-item " + (GetActive("profile") ? "active" : ""));
+					__builder.AddAttribute(104, "b-c8fp1rjic8");
+					__builder.AddMarkupContent(105, "<span class=\"material-symbols-outlined nav-icon\">person</span>\n                    <span class=\"nav-label\">Profile</span>");
 					__builder.CloseElement();
 				}
 

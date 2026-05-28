@@ -95,18 +95,22 @@ namespace Attencial.Client.Layout
 					return;
 				}
 				using JsonDocument doc = JsonDocument.Parse(await httpResponseMessage.Content.ReadAsStringAsync());
-				string requestUri = ((doc.RootElement.GetProperty("data").GetProperty("role").GetString() ?? "").Equals("Professor", StringComparison.OrdinalIgnoreCase) ? "api/faculty/enrollment/status" : "api/enrollment/status");
-				HttpRequestMessage httpRequestMessage2 = new HttpRequestMessage(HttpMethod.Get, requestUri);
-				httpRequestMessage2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-				HttpResponseMessage httpResponseMessage2 = await Http.SendAsync(httpRequestMessage2);
-				if (!httpResponseMessage2.IsSuccessStatusCode)
+				var role = doc.RootElement.GetProperty("data").GetProperty("role").GetString() ?? "";
+
+				// Only enforce face enrollment for students — professors skip this gate
+				if (!role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
 				{
-					return;
-				}
-				using JsonDocument jsonDocument = JsonDocument.Parse(await httpResponseMessage2.Content.ReadAsStringAsync());
-				if (!jsonDocument.RootElement.GetProperty("data").GetProperty("isEnrolled").GetBoolean())
-				{
-					Nav.NavigateTo("/enroll-face", forceLoad: true);
+					HttpRequestMessage httpRequestMessage2 = new HttpRequestMessage(HttpMethod.Get, "api/enrollment/status");
+					httpRequestMessage2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+					HttpResponseMessage httpResponseMessage2 = await Http.SendAsync(httpRequestMessage2);
+					if (httpResponseMessage2.IsSuccessStatusCode)
+					{
+						using JsonDocument jsonDocument = JsonDocument.Parse(await httpResponseMessage2.Content.ReadAsStringAsync());
+						if (!jsonDocument.RootElement.GetProperty("data").GetProperty("isEnrolled").GetBoolean())
+						{
+							Nav.NavigateTo("/enroll-face", forceLoad: true);
+						}
+					}
 				}
 			}
 			catch (Exception ex)

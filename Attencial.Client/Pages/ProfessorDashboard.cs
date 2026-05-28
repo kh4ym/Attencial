@@ -181,7 +181,7 @@ namespace Attencial.Client.Pages
 			__builder.OpenComponent<PageTitle>(0);
 			__builder.AddAttribute(1, "ChildContent", (RenderFragment)delegate(RenderTreeBuilder renderTreeBuilder)
 			{
-				renderTreeBuilder.AddMarkupContent(2, "Professor Dashboard — Attencial");
+				renderTreeBuilder.AddMarkupContent(2, "At a Glance — Attencial");
 			});
 			__builder.CloseComponent();
 			if (!isAuthorized)
@@ -207,7 +207,7 @@ namespace Attencial.Client.Pages
 				__builder.AddContent(15, DateTime.Now.ToString("MMMM yyyy").ToUpper());
 				__builder.CloseElement();
 				__builder.AddMarkupContent(16, "\n                    ");
-				__builder.AddMarkupContent(17, "<h1 class=\"font-display-lg text-display-lg text-on-surface\">Dashboard</h1>\n                    <div class=\"red-accent-line mt-3\"></div>");
+				__builder.AddMarkupContent(17, "<h1 class=\"font-display-lg text-display-lg text-on-surface\">At a Glance</h1>\n                    <div class=\"red-accent-line mt-3\"></div>");
 				__builder.CloseElement();
 				__builder.AddMarkupContent(18, "\n                ");
 				__builder.AddMarkupContent(19, "<a href=\"session\" class=\"btn-neo-primary no-underline text-lg px-8 py-4 flex items-center gap-3 animate-bob\"><span class=\"material-symbols-outlined text-2xl\">play_circle</span>\n                    Create Session\n                </a>");
@@ -272,7 +272,6 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.AddMarkupContent(65, "\n                        ");
 				__builder.AddContent(66, pendingEnrollments);
-				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.AddMarkupContent(70, "\n                ");
@@ -732,7 +731,6 @@ namespace Attencial.Client.Pages
 				__builder.AddMarkupContent(341, "\n\n                ");
 				__builder.OpenElement(342, "div");
 				__builder.AddAttribute(343, "class", "space-y-gutter");
-				__builder.CloseElement();
 				__builder.AddMarkupContent(370, "\n\n                    ");
 				__builder.OpenElement(371, "button");
 				__builder.AddAttribute(372, "class", "card-neo stagger-6 w-full text-left no-underline hover:border-primary transition-colors group cursor-pointer");
@@ -756,6 +754,7 @@ namespace Attencial.Client.Pages
 				__builder.OpenElement(387, "span");
 				__builder.AddAttribute(388, "class", "badge-neo " + ((pendingEnrollments > 0) ? "badge-neo-active" : ""));
 				__builder.AddContent(389, pendingEnrollments);
+				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.AddMarkupContent(400, "\n\n                    ");
@@ -871,6 +870,7 @@ namespace Attencial.Client.Pages
 				return;
 			}
 			isAuthorized = true;
+			StateHasChanged();
 			await LoadAllData();
 		}
 

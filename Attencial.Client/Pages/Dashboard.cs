@@ -491,6 +491,7 @@ namespace Attencial.Client.Pages
 			finally
 			{
 				isLoading = false;
+			StateHasChanged();
 			}
 		}
 

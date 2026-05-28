@@ -53,6 +53,12 @@ namespace Attencial.Client.Pages
 			if (isLoggedIn)
 			{
 				__builder.AddMarkupContent(18, "<a class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" href=\"profile\" title=\"Profile\">person</a>");
+				__builder.OpenElement(185, "button");
+				__builder.AddAttribute(186, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)Logout));
+				__builder.AddAttribute(187, "class", "material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer");
+				__builder.AddAttribute(188, "title", "Logout");
+				__builder.AddContent(189, "logout");
+				__builder.CloseElement();
 			}
 			else
 			{
@@ -160,6 +166,12 @@ namespace Attencial.Client.Pages
 				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSpeed", 800, 1800);
 				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statUptime", 99, 2200);
 			}
+		}
+
+		private async Task Logout()
+		{
+			await JS.InvokeVoidAsync("authStorage.removeToken");
+			Nav.NavigateTo("/login", forceLoad: true);
 		}
 	}
 }

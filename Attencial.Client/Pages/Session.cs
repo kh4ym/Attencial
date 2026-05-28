@@ -415,7 +415,7 @@ namespace Attencial.Client.Pages
 					__builder.AddAttribute(170, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
 					__builder.OpenElement(171, "div");
 					__builder.AddAttribute(172, "class", "flex-[2] flex flex-col items-center justify-center border border-on-surface bg-surface p-5 gap-4 min-h-0");
-					__builder.AddMarkupContent(173, "<div class=\"p-4 border-4 border-on-surface bg-white\" style=\"box-shadow: 10px 10px 0px #1b1c1a;\"><div id=\"qrContainer\" style=\"width:160px;height:160px;\"></div></div>\n                                ");
+					__builder.AddMarkupContent(173, "<div class=\"p-4 border-4 border-on-surface bg-white mx-auto\" style=\"box-shadow: 10px 10px 0px #1b1c1a;\"><div id=\"qrContainer\" style=\"width:160px;height:160px;\"></div></div>\n                                ");
 					__builder.OpenElement(174, "div");
 					__builder.AddAttribute(175, "class", "flex gap-10");
 					__builder.OpenElement(176, "span");
