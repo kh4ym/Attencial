@@ -62,6 +62,42 @@ namespace Attencial.API.Migrations
                     b.ToTable("AbuseLogs");
                 });
 
+            modelBuilder.Entity("Attencial.API.Models.AttendanceAppeal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CourseName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("AttendanceAppeals");
+                });
+
             modelBuilder.Entity("Attencial.API.Models.AttendanceRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -260,114 +296,6 @@ namespace Attencial.API.Migrations
                     b.ToTable("FaceVectors");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.FacultyAbuseLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AbuseType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("FacultyAbuseLogs");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.FacultyAttendanceRecord", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CheckInTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double?>("HoursWorked")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("FacultyAttendanceRecords");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.LeaveRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AdminNote")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AttachmentUrl")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("LeaveRequests");
-                });
-
             modelBuilder.Entity("Attencial.API.Models.OnlineAttendanceToken", b =>
                 {
                     b.Property<int>("Id")
@@ -519,6 +447,17 @@ namespace Attencial.API.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("Attencial.API.Models.AttendanceAppeal", b =>
+                {
+                    b.HasOne("Attencial.API.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Attencial.API.Models.AttendanceRecord", b =>
                 {
                     b.HasOne("Attencial.API.Models.AttendanceSession", "Session")
@@ -613,39 +552,6 @@ namespace Attencial.API.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.FacultyAbuseLog", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany()
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professor");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.FacultyAttendanceRecord", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany("FacultyAttendanceRecords")
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professor");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.LeaveRequest", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany()
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professor");
-                });
-
             modelBuilder.Entity("Attencial.API.Models.OnlineAttendanceToken", b =>
                 {
                     b.HasOne("Attencial.API.Models.AttendanceSession", "Session")
@@ -700,8 +606,6 @@ namespace Attencial.API.Migrations
                     b.Navigation("Courses");
 
                     b.Navigation("FaceVectors");
-
-                    b.Navigation("FacultyAttendanceRecords");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.Student", b =>

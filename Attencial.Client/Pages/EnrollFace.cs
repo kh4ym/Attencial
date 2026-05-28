@@ -80,9 +80,9 @@ namespace Attencial.Client.Pages
 			else
 			{
 				__builder.OpenElement(18, "div");
-				__builder.AddAttribute(19, "class", "flex-1 flex items-start justify-center pt-4 lg:pt-6 overflow-hidden relative");
+				__builder.AddAttribute(19, "class", "flex-1 flex flex-col lg:flex-row items-start justify-center pt-4 lg:pt-6 overflow-hidden relative");
 				__builder.OpenElement(20, "div");
-				__builder.AddAttribute(21, "class", "absolute inset-y-0 left-0 w-full lg:w-[calc(100%-420px)] flex items-center justify-center p-4 lg:p-8 transition-all duration-700 ease-in-out " + (cameraActive ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"));
+				__builder.AddAttribute(21, "class", "relative lg:absolute lg:inset-y-0 lg:left-0 w-full lg:w-[calc(100%-420px)] flex items-center justify-center p-4 lg:p-8 transition-all duration-700 ease-in-out " + (cameraActive ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"));
 				__builder.OpenElement(22, "div");
 				__builder.AddAttribute(23, "class", "w-full max-w-[480px]");
 				__builder.OpenComponent<FaceCaptureComponent>(24);
@@ -105,7 +105,7 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.AddMarkupContent(32, "\n\n            ");
 				__builder.OpenElement(33, "div");
-				__builder.AddAttribute(34, "class", "w-full max-w-[420px] bg-surface border border-on-surface-variant/20 p-6 lg:p-10 flex flex-col justify-center transition-all duration-700 ease-in-out " + (cameraActive ? "lg:translate-x-[calc(50vw-210px)]" : "translate-x-0"));
+				__builder.AddAttribute(34, "class", "w-full lg:max-w-[420px] bg-surface border border-on-surface-variant/20 p-6 lg:p-10 flex flex-col justify-center transition-all duration-700 ease-in-out mt-4 lg:mt-0 " + (cameraActive ? "lg:translate-x-[calc(50vw-210px)]" : "translate-x-0"));
 				__builder.OpenElement(35, "div");
 				__builder.AddAttribute(36, "class", "space-y-6");
 				__builder.OpenElement(37, "div");

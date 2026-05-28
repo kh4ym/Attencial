@@ -7,17 +7,26 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Attencial.API.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateAllTables : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CreatedAt",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Professors",
@@ -50,7 +59,7 @@ namespace Attencial.API.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     FullName = table.Column<string>(type: "text", nullable: false),
                     RollNumber = table.Column<string>(type: "text", nullable: false),
-                    AzurePersonId = table.Column<string>(type: "text", nullable: true),
+                    RekognitionExternalId = table.Column<string>(type: "text", nullable: true),
                     EnrollmentStatus = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -88,74 +97,25 @@ namespace Attencial.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FacultyAbuseLogs",
+                name: "AttendanceAppeals",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProfessorId = table.Column<int>(type: "integer", nullable: false),
-                    AbuseType = table.Column<string>(type: "text", nullable: false),
-                    Details = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FacultyAbuseLogs", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_FacultyAbuseLogs_Professors_ProfessorId",
-                        column: x => x.ProfessorId,
-                        principalTable: "Professors",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "FacultyAttendanceRecords",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProfessorId = table.Column<int>(type: "integer", nullable: false),
-                    CheckInTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CheckOutTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    HoursWorked = table.Column<double>(type: "double precision", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FacultyAttendanceRecords", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_FacultyAttendanceRecords_Professors_ProfessorId",
-                        column: x => x.ProfessorId,
-                        principalTable: "Professors",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "LeaveRequests",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProfessorId = table.Column<int>(type: "integer", nullable: false),
-                    LeaveType = table.Column<string>(type: "text", nullable: false),
+                    StudentId = table.Column<int>(type: "integer", nullable: false),
+                    SessionId = table.Column<int>(type: "integer", nullable: false),
+                    CourseName = table.Column<string>(type: "text", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
-                    AttachmentUrl = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    AdminNote = table.Column<string>(type: "text", nullable: true),
-                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LeaveRequests", x => x.Id);
+                    table.PrimaryKey("PK_AttendanceAppeals", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LeaveRequests_Professors_ProfessorId",
-                        column: x => x.ProfessorId,
-                        principalTable: "Professors",
+                        name: "FK_AttendanceAppeals_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -166,9 +126,10 @@ namespace Attencial.API.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    StudentId = table.Column<int>(type: "integer", nullable: false),
-                    AzurePersonId = table.Column<string>(type: "text", nullable: false),
-                    AzureFaceId = table.Column<string>(type: "text", nullable: false),
+                    StudentId = table.Column<int>(type: "integer", nullable: true),
+                    ProfessorId = table.Column<int>(type: "integer", nullable: true),
+                    RekognitionExternalId = table.Column<string>(type: "text", nullable: false),
+                    RekognitionFaceId = table.Column<string>(type: "text", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -176,11 +137,15 @@ namespace Attencial.API.Migrations
                 {
                     table.PrimaryKey("PK_FaceVectors", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_FaceVectors_Professors_ProfessorId",
+                        column: x => x.ProfessorId,
+                        principalTable: "Professors",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_FaceVectors_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -203,6 +168,36 @@ namespace Attencial.API.Migrations
                         name: "FK_AttendanceSessions_Courses_CourseId",
                         column: x => x.CourseId,
                         principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EnrollmentRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentId = table.Column<int>(type: "integer", nullable: false),
+                    CourseId = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Note = table.Column<string>(type: "text", nullable: true),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EnrollmentRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EnrollmentRequests_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EnrollmentRequests_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -240,7 +235,7 @@ namespace Attencial.API.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SessionId = table.Column<int>(type: "integer", nullable: false),
+                    SessionId = table.Column<int>(type: "integer", nullable: true),
                     StudentId = table.Column<int>(type: "integer", nullable: true),
                     AbuseType = table.Column<string>(type: "text", nullable: false),
                     Details = table.Column<string>(type: "text", nullable: false),
@@ -255,8 +250,7 @@ namespace Attencial.API.Migrations
                         name: "FK_AbuseLogs_AttendanceSessions_SessionId",
                         column: x => x.SessionId,
                         principalTable: "AttendanceSessions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_AbuseLogs_Students_StudentId",
                         column: x => x.StudentId,
@@ -318,12 +312,6 @@ namespace Attencial.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_Email",
-                table: "Users",
-                column: "Email",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AbuseLogs_SessionId",
                 table: "AbuseLogs",
                 column: "SessionId");
@@ -331,6 +319,11 @@ namespace Attencial.API.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_AbuseLogs_StudentId",
                 table: "AbuseLogs",
+                column: "StudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttendanceAppeals_StudentId",
+                table: "AttendanceAppeals",
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
@@ -355,6 +348,17 @@ namespace Attencial.API.Migrations
                 column: "ProfessorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EnrollmentRequests_CourseId",
+                table: "EnrollmentRequests",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EnrollmentRequests_StudentId_CourseId",
+                table: "EnrollmentRequests",
+                columns: new[] { "StudentId", "CourseId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Enrollments_CourseId",
                 table: "Enrollments",
                 column: "CourseId");
@@ -366,24 +370,14 @@ namespace Attencial.API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_FaceVectors_ProfessorId",
+                table: "FaceVectors",
+                column: "ProfessorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FaceVectors_StudentId",
                 table: "FaceVectors",
                 column: "StudentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FacultyAbuseLogs_ProfessorId",
-                table: "FacultyAbuseLogs",
-                column: "ProfessorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FacultyAttendanceRecords_ProfessorId",
-                table: "FacultyAttendanceRecords",
-                column: "ProfessorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LeaveRequests_ProfessorId",
-                table: "LeaveRequests",
-                column: "ProfessorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OnlineAttendanceTokens_SessionId",
@@ -408,6 +402,12 @@ namespace Attencial.API.Migrations
                 table: "Students",
                 column: "UserId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -417,22 +417,19 @@ namespace Attencial.API.Migrations
                 name: "AbuseLogs");
 
             migrationBuilder.DropTable(
+                name: "AttendanceAppeals");
+
+            migrationBuilder.DropTable(
                 name: "AttendanceRecords");
+
+            migrationBuilder.DropTable(
+                name: "EnrollmentRequests");
 
             migrationBuilder.DropTable(
                 name: "Enrollments");
 
             migrationBuilder.DropTable(
                 name: "FaceVectors");
-
-            migrationBuilder.DropTable(
-                name: "FacultyAbuseLogs");
-
-            migrationBuilder.DropTable(
-                name: "FacultyAttendanceRecords");
-
-            migrationBuilder.DropTable(
-                name: "LeaveRequests");
 
             migrationBuilder.DropTable(
                 name: "OnlineAttendanceTokens");
@@ -449,13 +446,8 @@ namespace Attencial.API.Migrations
             migrationBuilder.DropTable(
                 name: "Professors");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Users_Email",
-                table: "Users");
-
-            migrationBuilder.DropColumn(
-                name: "CreatedAt",
-                table: "Users");
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

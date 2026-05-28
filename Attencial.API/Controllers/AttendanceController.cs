@@ -270,6 +270,53 @@ public class AttendanceController : ControllerBase
         });
     }
 
+    // ── GET /api/attendance/sessions/active ──────────────────────────────────
+    // Returns the professor's currently active session (if any), so it survives
+    // page navigation and tab switches in the frontend.
+    [HttpGet("sessions/active")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> GetActiveSession()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound();
+
+        var session = await _context.AttendanceSessions
+            .Include(s => s.Course)
+            .Include(s => s.Token)
+            .FirstOrDefaultAsync(s => s.ProfessorId == professor.Id && s.IsActive);
+
+        if (session is null || session.Token is null)
+            return Ok(new ApiResponse<object> { Success = true, Data = null });
+
+        var clientBaseUrl = _config["ClientBaseUrl"] ?? "http://localhost:7251";
+        var attendanceUrl = $"{clientBaseUrl}/attend?token={session.Token.Token}";
+
+        return Ok(new ApiResponse<SessionResponseDto>
+        {
+            Success = true,
+            Data = new SessionResponseDto
+            {
+                SessionId     = session.Id,
+                CourseId      = session.CourseId,
+                CourseName    = session.Course.Name,
+                CourseCode    = session.Course.CourseCode,
+                Token         = session.Token.Token,
+                ExpiryMinutes = session.Token.ExpiryMinutes,
+                ExpiresAt     = session.Token.ExpiresAt,
+                IsActive      = session.IsActive && session.Token.ExpiresAt > DateTime.UtcNow,
+                CreatedAt     = session.CreatedAt,
+                AttendanceUrl = attendanceUrl
+            }
+        });
+    }
+
     // ── GET /api/attendance/sessions/validate ────────────────────────────────
     // Validates if an attendance token is active and not expired.
     [HttpGet("sessions/validate")]

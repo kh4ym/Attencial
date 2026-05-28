@@ -281,7 +281,8 @@ namespace Attencial.Client.Pages
 						if (apiResponse?.Data?.Token != null)
 						{
 							await JS.InvokeVoidAsync("authStorage.setToken", apiResponse.Data.Token);
-							Nav.NavigateTo("/enroll-face", forceLoad: true);
+							var dest = role == "Professor" ? "/professor-dashboard" : "/enroll-face";
+						Nav.NavigateTo(dest, forceLoad: true);
 							return;
 						}
 					}

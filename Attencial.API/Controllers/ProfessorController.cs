@@ -284,4 +284,68 @@ public class ProfessorController : ControllerBase
         Response.Headers.Append("Content-Disposition", contentDisposition);
         return File(bytes, "text/csv");
     }
+
+    [HttpGet("appeals/pending")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> GetPendingAppeals()
+    {
+        var appeals = await _context.AttendanceAppeals
+            .Include(a => a.Student)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.Id,
+                StudentName = a.Student.FullName,
+                RollNumber = a.Student.RollNumber,
+                a.CourseName,
+                a.Reason,
+                a.Status,
+                SessionDate = a.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new ApiResponse<object> { Success = true, Data = appeals });
+    }
+
+    [HttpPut("appeals/{id:int}/approve")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> ApproveAppeal(int id)
+    {
+        var appeal = await _context.AttendanceAppeals.FindAsync(id);
+        if (appeal is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Appeal not found." });
+
+        appeal.Status = "Approved";
+
+        // Auto-mark attendance for the appealed session
+        var alreadyMarked = await _context.AttendanceRecords
+            .AnyAsync(ar => ar.SessionId == appeal.SessionId && ar.StudentId == appeal.StudentId);
+        if (!alreadyMarked)
+        {
+            _context.AttendanceRecords.Add(new AttendanceRecord
+            {
+                SessionId = appeal.SessionId,
+                StudentId = appeal.StudentId,
+                Confidence = 100f,
+                DeviceId = "appeal-approved",
+                MarkedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new ApiResponse<string> { Success = true, Message = "Appeal approved." });
+    }
+
+    [HttpPut("appeals/{id:int}/reject")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> RejectAppeal(int id)
+    {
+        var appeal = await _context.AttendanceAppeals.FindAsync(id);
+        if (appeal is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Appeal not found." });
+
+        appeal.Status = "Rejected";
+        await _context.SaveChangesAsync();
+        return Ok(new ApiResponse<string> { Success = true, Message = "Appeal rejected." });
+    }
 }

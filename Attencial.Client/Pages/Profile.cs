@@ -257,7 +257,8 @@ namespace Attencial.Client.Pages
 					__builder.AddMarkupContent(121, "<div><span class=\"font-label-caps text-on-surface block\">Not Enrolled</span>\n                                <span class=\"font-label-sm text-on-surface-variant\">Required for attendance</span></div>");
 				}
 				__builder.CloseElement();
-				__builder.AddMarkupContent(122, "\n\n                    ");
+				if (userRole == "Student")
+				{
 				__builder.OpenElement(123, "a");
 				__builder.AddAttribute(124, "href", "/enroll-face?returnUrl=/profile");
 				__builder.AddAttribute(125, "class", "btn-neo-primary w-full text-sm flex items-center justify-center gap-2 no-underline");
@@ -269,6 +270,7 @@ namespace Attencial.Client.Pages
 				__builder.AddContent(130, isEnrolled ? "Refresh Face" : "Enroll Face");
 				__builder.CloseElement();
 				__builder.CloseElement();
+				}
 				__builder.CloseElement();
 			}
 			__builder.CloseElement();

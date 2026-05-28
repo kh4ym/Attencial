@@ -73,7 +73,7 @@ namespace Attencial.Client.Pages
 			__builder.AddAttribute(23, "class", "pt-5");
 			__builder.OpenElement(24, "section");
 			__builder.AddAttribute(25, "class", "relative min-h-[80vh] flex flex-col justify-start pt-8 md:pt-16 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto overflow-visible");
-			__builder.AddMarkupContent(26, "<div data-spin data-spin-speed=\"180\" data-spin-dir=\"1\" class=\"absolute top-40 right-20 w-24 h-24 border-[3px] border-primary rounded-full geometric-accent opacity-20\"></div>\n            <div data-spin data-spin-speed=\"120\" data-spin-dir=\"-1\" class=\"absolute bottom-20 left-1/4 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[70px] border-b-tertiary geometric-accent opacity-10\"></div>\n\n            ");
+			__builder.AddMarkupContent(26, "<div data-spin data-spin-speed=\"180\" data-spin-dir=\"1\" class=\"absolute top-40 right-20 w-24 h-24 border-[3px] border-primary rounded-full geometric-accent hidden md:block opacity-20\"></div>\n            <div data-spin data-spin-speed=\"120\" data-spin-dir=\"-1\" class=\"absolute bottom-20 left-1/4 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[70px] border-b-tertiary geometric-accent opacity-10\"></div>\n\n            ");
 			__builder.OpenElement(27, "div");
 			__builder.AddAttribute(28, "class", "grid grid-cols-12 gap-gutter relative z-10");
 			__builder.OpenElement(29, "div");

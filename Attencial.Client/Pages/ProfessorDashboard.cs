@@ -376,15 +376,6 @@ namespace Attencial.Client.Pages
 							__builder.AddAttribute(154, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => LoadAttendanceView(course)));
 							__builder.AddMarkupContent(155, "\n                                                Attendance\n                                            ");
 							__builder.CloseElement();
-							__builder.AddMarkupContent(156, "\n                                            ");
-							__builder.OpenElement(157, "button");
-							__builder.AddAttribute(158, "class", "font-label-caps text-label-sm px-3 py-2 border-0 bg-transparent cursor-pointer transition-colors " + ((course.ActiveTab == "export") ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"));
-							__builder.AddAttribute(159, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)delegate
-							{
-								course.ActiveTab = "export";
-							}));
-							__builder.AddMarkupContent(160, "\n                                                Export\n                                            ");
-							__builder.CloseElement();
 							__builder.CloseElement();
 							if (course.ActiveTab == "sessions")
 							{
@@ -690,37 +681,7 @@ namespace Attencial.Client.Pages
 									__builder.CloseElement();
 									__builder.CloseElement();
 									__builder.CloseElement();
-									__builder.AddMarkupContent(319, "\n                                                ");
-									__builder.OpenElement(320, "div");
-									__builder.AddAttribute(321, "class", "mt-4 flex gap-2");
-									__builder.OpenElement(322, "a");
-									__builder.AddAttribute(323, "href", "/api/professor/courses/" + course.Id + "/export?token=" + jwtToken);
-									__builder.AddAttribute(324, "class", "btn-neo-primary text-sm no-underline inline-flex items-center gap-2");
-									__builder.AddAttribute(325, "target", "_blank");
-									__builder.AddMarkupContent(326, "<span class=\"material-symbols-outlined text-sm\">file_download</span> Export CSV\n                                                    ");
-									__builder.CloseElement();
-									__builder.CloseElement();
 								}
-							}
-							if (course.ActiveTab == "export")
-							{
-								__builder.OpenElement(327, "div");
-								__builder.AddAttribute(328, "class", "text-center py-8");
-								__builder.AddMarkupContent(329, "<span class=\"material-symbols-outlined text-5xl text-on-surface-variant/20 block mb-4\">download</span>\n                                                ");
-								__builder.OpenElement(330, "p");
-								__builder.AddAttribute(331, "class", "font-body-md text-on-surface-variant mb-4");
-								__builder.AddContent(332, "Download a CSV attendance report for ");
-								__builder.AddContent(333, course.Name);
-								__builder.AddContent(334, ".");
-								__builder.CloseElement();
-								__builder.AddMarkupContent(335, "\n                                                ");
-								__builder.OpenElement(336, "a");
-								__builder.AddAttribute(337, "href", "/api/professor/courses/" + course.Id + "/export?token=" + jwtToken);
-								__builder.AddAttribute(338, "class", "btn-neo-primary inline-block no-underline text-sm flex items-center justify-center gap-2 mx-auto max-w-[240px]");
-								__builder.AddAttribute(339, "target", "_blank");
-								__builder.AddMarkupContent(340, "<span class=\"material-symbols-outlined text-lg\">file_download</span> Export CSV\n                                                ");
-								__builder.CloseElement();
-								__builder.CloseElement();
 							}
 							__builder.CloseElement();
 						}
@@ -733,7 +694,7 @@ namespace Attencial.Client.Pages
 				__builder.AddAttribute(343, "class", "space-y-gutter");
 				__builder.AddMarkupContent(370, "\n\n                    ");
 				__builder.OpenElement(371, "button");
-				__builder.AddAttribute(372, "class", "card-neo stagger-6 w-full text-left no-underline hover:border-primary transition-colors group cursor-pointer");
+				__builder.AddAttribute(372, "class", "card-neo stagger-6 w-full text-left no-underline hover:border-primary transition-colors group cursor-pointer " + (pendingAppealCount > 0 ? "border-2 border-primary" : ""));
 				__builder.AddAttribute(373, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)LoadAppeals));
 				__builder.OpenElement(374, "div");
 				__builder.AddAttribute(375, "class", "flex justify-between items-center");
@@ -747,7 +708,7 @@ namespace Attencial.Client.Pages
 				__builder.AddMarkupContent(380, "\n\n                    ");
 				__builder.OpenElement(381, "a");
 				__builder.AddAttribute(382, "href", "enrollment-review");
-				__builder.AddAttribute(383, "class", "card-neo no-underline block w-full text-left");
+				__builder.AddAttribute(383, "class", "card-neo no-underline block w-full text-left " + (pendingEnrollments > 0 ? "border-2 border-primary" : ""));
 				__builder.OpenElement(384, "div");
 				__builder.AddAttribute(385, "class", "flex justify-between items-center");
 				__builder.AddMarkupContent(386, "<div class=\"flex items-center gap-3\"><span class=\"material-symbols-outlined text-2xl text-primary group-hover:scale-110 transition-transform\">person_add</span>\n                                <div><h3 class=\"font-label-caps text-label-caps text-on-surface\">Enrollment Requests</h3>\n                                    <p class=\"font-label-sm text-on-surface-variant\">Review student enrollments</p></div></div>\n                            ");
@@ -789,6 +750,11 @@ namespace Attencial.Client.Pages
 			__builder.AddContent(414, "close");
 			__builder.CloseElement();
 			__builder.CloseElement();
+				if (!string.IsNullOrEmpty(errorMessage))
+				{
+					__builder.AddMarkupContent(415, "<p class=\"font-body-md text-error text-center py-8\">" + errorMessage + "</p>");
+				}
+				else
 			if (appealsList.Count == 0)
 			{
 				__builder.AddMarkupContent(415, "<p class=\"font-body-md text-on-surface-variant text-center py-8\">No appeals found.</p>");
@@ -936,7 +902,25 @@ namespace Attencial.Client.Pages
 						using JsonDocument jsonDocument4 = JsonDocument.Parse(await httpResponseMessage4.Content.ReadAsStringAsync());
 						pendingEnrollments = jsonDocument4.RootElement.GetProperty("data").EnumerateArray().Count();
 					}
-					await CheckFaceEnrollment();
+
+			// Load pending appeals count
+			HttpRequestMessage appealRequest = new HttpRequestMessage(HttpMethod.Get, "api/professor/appeals/pending");
+			appealRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+			HttpResponseMessage appealResponse = await Http.SendAsync(appealRequest);
+			if (appealResponse.IsSuccessStatusCode)
+			{
+				using JsonDocument appealDoc = JsonDocument.Parse(await appealResponse.Content.ReadAsStringAsync());
+				var appealsList = new List<AppealItem>();
+				foreach (JsonElement item in appealDoc.RootElement.GetProperty("data").EnumerateArray())
+				{
+					appealsList.Add(new AppealItem
+					{
+						Id = item.GetProperty("id").GetInt32(),
+						Status = item.GetProperty("status").GetString() ?? ""
+					});
+				}
+				pendingAppealCount = appealsList.Count(a => a.Status == "Pending");
+			}
 				}
 				else if (httpResponseMessage.StatusCode == HttpStatusCode.NotFound)
 				{
@@ -957,29 +941,6 @@ namespace Attencial.Client.Pages
 			{
 				isLoadingCourses = false;
 				StateHasChanged();
-			}
-		}
-
-		private async Task CheckFaceEnrollment()
-		{
-			_ = 1;
-			try
-			{
-				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "api/faculty/enrollment/status");
-				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-				HttpResponseMessage httpResponseMessage = await Http.SendAsync(httpRequestMessage);
-				if (!httpResponseMessage.IsSuccessStatusCode)
-				{
-					return;
-				}
-				using JsonDocument jsonDocument = JsonDocument.Parse(await httpResponseMessage.Content.ReadAsStringAsync());
-				if (!jsonDocument.RootElement.GetProperty("data").GetProperty("isEnrolled").GetBoolean())
-				{
-					Nav.NavigateTo("/enroll-face", forceLoad: true);
-				}
-			}
-			catch
-			{
 			}
 		}
 
@@ -1133,7 +1094,8 @@ namespace Attencial.Client.Pages
 				{
 					return;
 				}
-				string[] array = (await httpResponseMessage.Content.ReadAsStringAsync()).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+				var csv = (await httpResponseMessage.Content.ReadAsStringAsync()).Replace("\r", "");
+		string[] array = csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 				if (array.Length < 2)
 				{
 					return;
@@ -1166,7 +1128,7 @@ namespace Attencial.Client.Pages
 					for (int k = 0; k < list.Count; k++)
 					{
 						int num4 = 3 + k;
-						bool flag = num4 < array3.Length && array3[num4].Trim('"') == "P";
+						bool flag = num4 < array3.Length && array3[num4].Trim('"', ' ', '\r') == "P";
 						attendanceRow.Sessions.Add(new SessionMark
 						{
 							SessionId = list[k].Item1,
@@ -1342,7 +1304,7 @@ namespace Attencial.Client.Pages
 						Id = item.GetProperty("id").GetInt32(),
 						StudentName = (item.GetProperty("studentName").GetString() ?? ""),
 						RollNumber = (item.GetProperty("rollNumber").GetString() ?? ""),
-						CourseCode = (item.GetProperty("courseCode").GetString() ?? ""),
+						CourseCode = (item.GetProperty("courseName").GetString() ?? ""),
 						Reason = (item.GetProperty("reason").GetString() ?? ""),
 						Status = (item.GetProperty("status").GetString() ?? ""),
 						SessionDate = item.GetProperty("sessionDate").GetDateTime()

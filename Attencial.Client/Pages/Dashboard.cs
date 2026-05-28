@@ -47,6 +47,7 @@ namespace Attencial.Client.Pages
 		private Dictionary<int, bool> expandedCourses = new Dictionary<int, bool>();
 
 		private bool hasAnimated;
+		private string greeting = "Good morning";
 
 		private bool showAppealForm;
 
@@ -110,7 +111,7 @@ namespace Attencial.Client.Pages
 				__builder.OpenElement(18, "div");
 				__builder.AddAttribute(19, "class", "max-w-2xl");
 				__builder.AddMarkupContent(20, "<span class=\"font-label-caps text-label-caps text-secondary tracking-widest block mb-4\"><span class=\"live-dot align-middle mr-2\"></span> LIVE DASHBOARD\n                    </span>\n                    ");
-				__builder.AddMarkupContent(21, "<h1 class=\"font-display-lg text-display-lg text-on-surface mb-2\" id=\"greetingText\">Good morning</h1>\n                    ");
+				__builder.AddMarkupContent(21, "<h1 class=\"font-display-lg text-display-lg text-on-surface mb-2 animate-fade-in\">" + greeting + @"</h1>\n                    ");
 				__builder.OpenElement(22, "p");
 				__builder.AddAttribute(23, "class", "font-body-lg text-body-lg text-on-surface-variant");
 				__builder.AddContent(24, userEmail);
@@ -225,7 +226,7 @@ namespace Attencial.Client.Pages
 							__builder.AddMarkupContent(98, "\n\n                                    ");
 							__builder.OpenElement(99, "div");
 							__builder.AddAttribute(100, "class", "pt-4 border-t border-outline-variant/20");
-							if (course.MissedSessions.Count == 0)
+							if (course.Sessions.Count(s => !s.IsPresent) == 0)
 							{
 								__builder.AddMarkupContent(101, "<div class=\"flex items-center gap-2 font-label-sm text-label-sm\" style=\"color: #2ecc71;\"><span class=\"material-symbols-outlined text-[16px]\">verified</span>\n                                                100% Perfect Attendance\n                                            </div>");
 							}
@@ -239,9 +240,9 @@ namespace Attencial.Client.Pages
 								}));
 								__builder.OpenElement(105, "span");
 								__builder.AddMarkupContent(106, "<span class=\"material-symbols-outlined text-[16px] align-middle\" style=\"color: #f1c40f;\">warning</span>\n                                                    Missed ");
-								__builder.AddContent(107, course.MissedSessions.Count);
+								__builder.AddContent(107, course.Sessions.Count(s => !s.IsPresent));
 								__builder.AddContent(108, " ");
-								__builder.AddContent(109, (course.MissedSessions.Count == 1) ? "session" : "sessions");
+								__builder.AddContent(109, (course.Sessions.Count(s => !s.IsPresent) == 1) ? "session" : "sessions");
 								__builder.CloseElement();
 								__builder.AddMarkupContent(110, "\n                                                ");
 								__builder.OpenElement(111, "span");
@@ -257,7 +258,7 @@ namespace Attencial.Client.Pages
 								{
 									__builder.OpenElement(117, "div");
 									__builder.AddAttribute(118, "class", "mt-3 p-4 bg-surface-container-low text-sm max-h-48 overflow-y-auto space-y-2");
-									foreach (MissedSessionDto session in course.MissedSessions)
+									foreach (AttendanceSessionDto session in course.Sessions.Where(s => !s.IsPresent))
 									{
 										__builder.OpenElement(119, "div");
 										__builder.AddAttribute(120, "class", "flex justify-between items-center py-1");
@@ -376,7 +377,7 @@ namespace Attencial.Client.Pages
 				__builder.OpenElement(191, "button");
 				__builder.AddAttribute(192, "class", "btn-neo-primary flex-1");
 				__builder.AddAttribute(193, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)SubmitAppeal));
-				__builder.AddAttribute(194, "disabled", isSubmittingAppeal || monthlyAppealCount >= 5);
+				__builder.AddAttribute(194, "disabled", isSubmittingAppeal);
 				__builder.AddContent(195, isSubmittingAppeal ? "Submitting..." : "Submit Appeal");
 				__builder.CloseElement();
 				__builder.AddMarkupContent(196, "\n                ");
@@ -470,7 +471,7 @@ namespace Attencial.Client.Pages
 				{
 					loadError = $"Failed to load student attendance. Status: {httpResponseMessage3.StatusCode}";
 				}
-				HttpRequestMessage httpRequestMessage4 = new HttpRequestMessage(HttpMethod.Get, "api/students/appeals");
+				HttpRequestMessage httpRequestMessage4 = new HttpRequestMessage(HttpMethod.Get, "api/students/me/appeals");
 				httpRequestMessage4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 				HttpResponseMessage httpResponseMessage4 = await Http.SendAsync(httpRequestMessage4);
 				if (!httpResponseMessage4.IsSuccessStatusCode)
@@ -504,8 +505,8 @@ namespace Attencial.Client.Pages
 				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statAttendance", attendanceRate, 1800);
 				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSessions", sessionsAttended, 1600);
 				int hour = DateTime.Now.Hour;
-				string text = ((hour < 12) ? "Good morning" : ((hour < 17) ? "Good afternoon" : "Good evening"));
-				await JS.InvokeVoidAsync("attencialAnimations.scrambleText", "greetingText", text, 800);
+				greeting = (hour < 12) ? "Good morning" : (hour < 17) ? "Good afternoon" : "Good evening";
+				StateHasChanged();
 			}
 		}
 
@@ -526,11 +527,13 @@ namespace Attencial.Client.Pages
 			appealReason = string.Empty;
 			appealMessage = string.Empty;
 			showAppealForm = true;
+			StateHasChanged();
 		}
 
 		private void CloseAppealForm()
 		{
 			showAppealForm = false;
+			StateHasChanged();
 		}
 
 		private async Task Logout()
@@ -552,18 +555,20 @@ namespace Attencial.Client.Pages
 			try
 			{
 				string parameter = await JSRuntimeExtensions.InvokeAsync<string>(JS, "authStorage.getToken", Array.Empty<object>());
-				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/students/appeal");
+				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/students/me/appeal");
 				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", parameter);
 				httpRequestMessage.Content = JsonContent.Create(new
 				{
 					sessionId = appealSessionId,
-					reason = appealReason.Trim()
+				reason = appealReason.Trim(),
+					courseName = appealCourseName,
 				});
 				HttpResponseMessage res = await Http.SendAsync(httpRequestMessage);
 				ApiResponse<string> apiResponse = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
 				if (res.IsSuccessStatusCode)
 				{
 					showAppealForm = false;
+			StateHasChanged();
 					monthlyAppealCount++;
 				}
 				else

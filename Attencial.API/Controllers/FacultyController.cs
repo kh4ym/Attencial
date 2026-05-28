@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +29,9 @@ public class FacultyController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> RegisterFace([FromBody] FacultyFaceScanRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Image))
+        // Accept both single-image and multi-image formats from the client
+        var imageBase64 = request.Image ?? request.Images?.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(imageBase64))
         {
             return BadRequest(new ApiResponse<string> { Success = false, Message = "Image base64 data is required." });
         }
@@ -47,7 +50,7 @@ public class FacultyController : ControllerBase
             return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
         }
 
-        var cleanBase64 = request.Image;
+        var cleanBase64 = imageBase64;
         if (cleanBase64.Contains(","))
         {
             cleanBase64 = cleanBase64.Split(',')[1];

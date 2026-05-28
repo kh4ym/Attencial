@@ -56,6 +56,16 @@ namespace Attencial.Client.Layout
 				__builder.AddAttribute(16, "b-c8fp1rjic8");
 				__builder.AddContent(17, "Dashboard");
 				__builder.CloseElement();
+				if (userRole != "Professor")
+				{
+					__builder.AddMarkupContent(210, "\n                    ");
+					__builder.OpenElement(211, "a");
+					__builder.AddAttribute(212, "href", "attendance");
+					__builder.AddAttribute(213, "class", "font-label-caps text-label-caps " + (GetActive("attendance") ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary") + " transition-colors no-underline");
+					__builder.AddAttribute(214, "b-c8fp1rjic8");
+					__builder.AddContent(215, "Attendance");
+					__builder.CloseElement();
+				}
 				if (userRole == "Professor")
 				{
 					__builder.OpenElement(24, "a");
@@ -136,6 +146,29 @@ namespace Attencial.Client.Layout
 				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">" + dashLabel + "</span>");
 				__builder.CloseElement();
 
+				// Dashboard (professors only)
+				if (userRole == "Professor")
+				{
+					__builder.OpenElement(87, "a");
+					__builder.AddAttribute(88, "href", "dashboard");
+					__builder.AddAttribute(89, "class", "mobile-nav-item " + (GetActive("dashboard") ? "active" : ""));
+					__builder.AddAttribute(90, "b-c8fp1rjic8");
+					__builder.AddMarkupContent(91, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">Dashboard</span>");
+					__builder.CloseElement();
+				}
+
+
+
+					// Attendance (students only)
+					if (userRole != "Professor")
+					{
+						__builder.OpenElement(220, "a");
+						__builder.AddAttribute(221, "href", "attendance");
+						__builder.AddAttribute(222, "class", "mobile-nav-item " + (GetActive("attendance") ? "active" : ""));
+						__builder.AddAttribute(223, "b-c8fp1rjic8");
+						__builder.AddMarkupContent(224, "<span class=\"material-symbols-outlined nav-icon\">assignment_turned_in</span>\n                    <span class=\"nav-label\">Attendance</span>");
+						__builder.CloseElement();
+					}
 				if (userRole == "Professor")
 				{
 					// Session

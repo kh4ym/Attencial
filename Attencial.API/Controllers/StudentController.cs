@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Attencial.API.Data;
+using Attencial.API.Models;
 using Attencial.Shared.Constants;
 using Attencial.Shared.Dtos;
 
@@ -104,12 +105,13 @@ public class StudentController : ControllerBase
             else if (percentage < 75.0)
                 status = AppConstants.AttendanceStatuses.Yellow;
 
-            var missedSessions = courseSessions
-                .Where(s => !attendedSessionIds.Contains(s.Id))
-                .Select(s => new MissedSessionDto
+            var allSessions = courseSessions
+                .OrderByDescending(s => s.StartTime)
+                .Select(s => new AttendanceSessionDto
                 {
                     SessionId = s.Id,
-                    Date = s.StartTime
+                    Date = s.StartTime,
+                    IsPresent = attendedSessionIds.Contains(s.Id)
                 })
                 .ToList();
 
@@ -123,7 +125,7 @@ public class StudentController : ControllerBase
                 AttendedSessions = attendedSessions,
                 Percentage = Math.Round(percentage, 1),
                 Status = status,
-                MissedSessions = missedSessions
+                Sessions = allSessions
             });
         }
 
@@ -146,4 +148,80 @@ public class StudentController : ControllerBase
             Data = summary
         });
     }
+
+    [HttpGet("me/appeals")]
+    [Authorize(Roles = AppConstants.Roles.Student)]
+    public async Task<IActionResult> GetMyAppeals()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var student = await _context.Students
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == userId);
+
+        if (student is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Student profile not found." });
+
+        var appeals = await _context.AttendanceAppeals
+            .AsNoTracking()
+            .Where(a => a.StudentId == student.Id)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.Id,
+                a.SessionId,
+                a.CourseName,
+                a.Reason,
+                a.Status,
+                a.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new ApiResponse<object> { Success = true, Data = appeals });
+    }
+
+    [HttpPost("me/appeal")]
+    [Authorize(Roles = AppConstants.Roles.Student)]
+    public async Task<IActionResult> SubmitAppeal([FromBody] SubmitAppealRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest(new ApiResponse<string> { Success = false, Message = "Reason is required." });
+
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.UserId == userId);
+
+        if (student is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Student profile not found." });
+
+        var existing = await _context.AttendanceAppeals
+            .AnyAsync(a => a.StudentId == student.Id && a.SessionId == request.SessionId);
+        if (existing)
+            return Conflict(new ApiResponse<string> { Success = false, Message = "You have already submitted an appeal for this session." });
+
+        var appeal = new AttendanceAppeal
+        {
+            StudentId = student.Id,
+            SessionId = request.SessionId,
+            CourseName = request.CourseName,
+            Reason = request.Reason.Trim()
+        };
+
+        _context.AttendanceAppeals.Add(appeal);
+        await _context.SaveChangesAsync();
+
+        return Ok(new ApiResponse<string> { Success = true, Message = "Appeal submitted successfully." });
+    }
+}
+
+public class SubmitAppealRequest
+{
+    public int SessionId { get; set; }
+    public string CourseName { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
 }

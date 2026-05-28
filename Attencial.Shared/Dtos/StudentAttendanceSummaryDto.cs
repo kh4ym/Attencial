@@ -21,12 +21,13 @@ public class StudentCourseAttendanceDto
     public int TotalSessions { get; set; }
     public int AttendedSessions { get; set; }
     public double Percentage { get; set; }
-    public string Status { get; set; } = string.Empty; // "Green", "Yellow", "Red"
-    public List<MissedSessionDto> MissedSessions { get; set; } = new();
+    public string Status { get; set; } = string.Empty;
+    public List<AttendanceSessionDto> Sessions { get; set; } = new();
 }
 
-public class MissedSessionDto
+public class AttendanceSessionDto
 {
     public int SessionId { get; set; }
     public DateTime Date { get; set; }
+    public bool IsPresent { get; set; }
 }

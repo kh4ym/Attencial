@@ -95,14 +95,8 @@ namespace Attencial.Client.Pages
 			__builder.OpenElement(37, "div");
 			__builder.AddAttribute(38, "class", "relative group");
 			__builder.OpenElement(39, "div");
-			__builder.AddAttribute(40, "class", "flex justify-between items-center mb-1");
+			__builder.AddAttribute(40, "class", "mb-1");
 			__builder.AddMarkupContent(41, "<label class=\"font-label-caps text-label-caps text-on-surface-variant group-focus-within:text-primary transition-colors\">PASSWORD</label>\n                            ");
-			__builder.OpenElement(42, "button");
-			__builder.AddAttribute(43, "type", "button");
-			__builder.AddAttribute(44, "class", "font-label-caps text-[10px] text-tertiary-container hover:underline bg-transparent border-0 cursor-pointer p-0");
-			__builder.AddAttribute(45, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)ShowForgotPasswordMessage));
-			__builder.AddContent(46, "FORGOT?");
-			__builder.CloseElement();
 			__builder.CloseElement();
 			__builder.AddMarkupContent(47, "\n                    ");
 			__builder.OpenElement(48, "div");
@@ -177,10 +171,6 @@ namespace Attencial.Client.Pages
 			showPassword = !showPassword;
 		}
 
-		private void ShowForgotPasswordMessage()
-		{
-			errorMessage = "Password reset is not yet available. Please contact your administrator.";
-		}
 
 		private async Task HandleLogin()
 		{
