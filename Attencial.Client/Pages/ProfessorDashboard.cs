@@ -155,6 +155,8 @@ namespace Attencial.Client.Pages
 
 		private int sessionToDelete;
 
+		private int courseToDelete;
+
 		private int overrideSessionId;
 
 		private List<EnrolledStudent> overrideStudents = new List<EnrolledStudent>();
@@ -186,7 +188,7 @@ namespace Attencial.Client.Pages
 			__builder.CloseComponent();
 			if (!isAuthorized)
 			{
-				__builder.AddMarkupContent(3, "<div class=\"min-h-screen canvas-bg flex items-center justify-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-3xl\">refresh</span></div>");
+				__builder.AddMarkupContent(3, "<div class=\"min-h-screen canvas-bg flex items-center justify-center\"><div class=\"spinner-ring-lg\"></div></div>");
 			}
 			else if (isProfileMissing)
 			{
@@ -207,7 +209,7 @@ namespace Attencial.Client.Pages
 				__builder.AddContent(15, DateTime.Now.ToString("MMMM yyyy").ToUpper());
 				__builder.CloseElement();
 				__builder.AddMarkupContent(16, "\n                    ");
-				__builder.AddMarkupContent(17, "<h1 class=\"font-display-lg text-display-lg text-on-surface\">At a Glance</h1>\n                    <div class=\"red-accent-line mt-3\"></div>");
+				__builder.AddMarkupContent(17, "<h1 class=\"font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface\">At a Glance</h1>\n                    <div class=\"red-accent-line mt-3\"></div>");
 				__builder.CloseElement();
 				__builder.AddMarkupContent(18, "\n                ");
 				__builder.AddMarkupContent(19, "<a href=\"session\" class=\"btn-neo-primary no-underline text-lg px-8 py-4 flex items-center gap-3 animate-bob\"><span class=\"material-symbols-outlined text-2xl\">play_circle</span>\n                    Create Session\n                </a>");
@@ -284,7 +286,7 @@ namespace Attencial.Client.Pages
 				__builder.AddMarkupContent(93, "<div class=\"border-b border-outline-variant/20 pb-4\"><h2 class=\"font-headline-md text-headline-md text-on-surface\">Your Courses</h2></div>");
 				if (isLoadingCourses)
 				{
-					__builder.AddMarkupContent(94, "<div class=\"card-neo text-center py-12\"><span class=\"material-symbols-outlined animate-spin text-primary text-2xl block mb-2\">refresh</span>\n                            <p class=\"font-label-sm text-on-surface-variant\">Loading courses...</p></div>");
+					__builder.AddMarkupContent(94, "<div class=\"card-neo text-center py-12\"><div class=\"spinner-ring-lg mb-2\"></div>\n                            <p class=\"font-label-sm text-on-surface-variant\">Loading courses...</p></div>");
 				}
 				else if (courses.Count == 0)
 				{
@@ -301,11 +303,48 @@ namespace Attencial.Client.Pages
 						__builder.OpenElement(100, "div");
 						__builder.AddAttribute(101, "class", "flex-1");
 						__builder.OpenElement(102, "div");
-						__builder.AddAttribute(103, "class", "flex items-center gap-3 mb-2");
-						__builder.OpenElement(104, "span");
-						__builder.AddAttribute(105, "class", "badge-neo text-[10px]");
-						__builder.AddContent(106, course.CourseCode);
+						__builder.AddAttribute(103, "class", "flex items-center justify-between w-full pr-4 mb-2");
+						__builder.OpenElement(104, "div");
+						__builder.AddAttribute(105, "class", "flex items-center gap-3");
+						__builder.OpenElement(106, "span");
+						__builder.AddAttribute(107, "class", "badge-neo text-[10px]");
+						__builder.AddContent(108, course.CourseCode);
 						__builder.CloseElement();
+						__builder.CloseElement();
+						if (courseToDelete == course.Id)
+						{
+							__builder.OpenElement(109, "div");
+							__builder.AddAttribute(110, "class", "flex items-center gap-2");
+							__builder.OpenElement(111, "button");
+							__builder.AddAttribute(112, "class", "font-label-caps text-[9px] text-error border border-error px-2 py-0.5 hover:bg-error hover:text-on-error transition-colors cursor-pointer");
+							__builder.AddAttribute(113, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => DeleteCourse(course.Id)));
+							__builder.AddEventStopPropagationAttribute(114, "onclick", value: true);
+							__builder.AddContent(115, "Confirm Delete");
+							__builder.CloseElement();
+							__builder.OpenElement(116, "button");
+							__builder.AddAttribute(117, "class", "font-label-caps text-[9px] text-on-surface-variant border border-on-surface-variant/30 px-2 py-0.5 hover:bg-surface-variant transition-colors cursor-pointer");
+							__builder.AddAttribute(118, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)delegate
+							{
+								courseToDelete = 0;
+							}));
+							__builder.AddEventStopPropagationAttribute(119, "onclick", value: true);
+							__builder.AddContent(120, "Cancel");
+							__builder.CloseElement();
+							__builder.CloseElement();
+						}
+						else
+						{
+							__builder.OpenElement(121, "button");
+							__builder.AddAttribute(122, "class", "text-error/60 hover:text-error transition-colors bg-transparent border-0 cursor-pointer p-1 flex items-center");
+							__builder.AddAttribute(123, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)delegate
+							{
+								courseToDelete = course.Id;
+							}));
+							__builder.AddEventStopPropagationAttribute(124, "onclick", value: true);
+							__builder.AddAttribute(125, "title", "Delete Course");
+							__builder.AddMarkupContent(126, "<span class=\"material-symbols-outlined text-[16px]\">delete</span>");
+							__builder.CloseElement();
+						}
 						__builder.CloseElement();
 						__builder.AddMarkupContent(107, "\n                                        ");
 						__builder.OpenElement(108, "h3");
@@ -381,7 +420,7 @@ namespace Attencial.Client.Pages
 							{
 								if (course.SessionHistory == null)
 								{
-									__builder.AddMarkupContent(161, "<div class=\"text-center py-4\"><span class=\"material-symbols-outlined animate-spin text-primary text-xl block mb-2\">refresh</span>\n                                                    <span class=\"font-label-sm text-on-surface-variant\">Loading sessions...</span></div>");
+									__builder.AddMarkupContent(161, "<div class=\"text-center py-4\"><div class=\"spinner-ring-sm mb-2\"></div>\n                                                    <span class=\"font-label-sm text-on-surface-variant block\">Loading sessions...</span></div>");
 								}
 								else if (course.SessionHistory.Count == 0)
 								{
@@ -526,7 +565,7 @@ namespace Attencial.Client.Pages
 							{
 								if (course.Roster == null)
 								{
-									__builder.AddMarkupContent(238, "<div class=\"text-center py-4\"><span class=\"material-symbols-outlined animate-spin text-primary text-xl block mb-2\">refresh</span>\n                                                    <span class=\"font-label-sm text-on-surface-variant\">Loading roster...</span></div>");
+									__builder.AddMarkupContent(238, "<div class=\"text-center py-4\"><div class=\"spinner-ring-sm mb-2\"></div>\n                                                    <span class=\"font-label-sm text-on-surface-variant block\">Loading roster...</span></div>");
 								}
 								else if (course.Roster.Count == 0)
 								{
@@ -562,7 +601,7 @@ namespace Attencial.Client.Pages
 							{
 								if (course.AbuseLogs == null)
 								{
-									__builder.AddMarkupContent(253, "<div class=\"text-center py-4\"><span class=\"material-symbols-outlined animate-spin text-primary text-xl block mb-2\">refresh</span>\n                                                    <span class=\"font-label-sm text-on-surface-variant\">Loading abuse logs...</span></div>");
+									__builder.AddMarkupContent(253, "<div class=\"text-center py-4\"><div class=\"spinner-ring-sm mb-2\"></div>\n                                                    <span class=\"font-label-sm text-on-surface-variant block\">Loading abuse logs...</span></div>");
 								}
 								else if (course.AbuseLogs.Count == 0)
 								{
@@ -615,7 +654,7 @@ namespace Attencial.Client.Pages
 							{
 								if (course.AttendanceData == null)
 								{
-									__builder.AddMarkupContent(281, "<div class=\"text-center py-4\"><span class=\"material-symbols-outlined animate-spin text-primary text-xl block mb-2\">refresh</span>\n                                                    <span class=\"font-label-sm text-on-surface-variant\">Loading attendance...</span></div>");
+									__builder.AddMarkupContent(281, "<div class=\"text-center py-4\"><div class=\"spinner-ring-sm mb-2\"></div>\n                                                    <span class=\"font-label-sm text-on-surface-variant block\">Loading attendance...</span></div>");
 								}
 								else if (course.AttendanceData.Count == 0)
 								{
@@ -718,9 +757,7 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
-				__builder.AddMarkupContent(400, "\n\n                    ");
-				__builder.AddMarkupContent(401, "<div class=\"card-neo\"><h3 class=\"font-label-caps text-label-caps text-on-surface mb-4 border-b border-outline-variant/20 pb-3\">Quick Actions</h3>\n                        <div class=\"space-y-3\"><a href=\"session\" class=\"btn-neo-primary w-full no-underline text-sm flex items-center justify-center gap-2\"><span class=\"material-symbols-outlined text-lg\">play_circle</span> Start New Session\n                            </a></div></div>");
-				__builder.CloseElement();
+					__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
 				__builder.CloseElement();
@@ -844,6 +881,11 @@ namespace Attencial.Client.Pages
 		{
 			isLoadingCourses = true;
 			errorMessage = null;
+			isProfileMissing = false;
+			courses = new List<CourseItem>();
+			todaySessionCount = 0;
+			pendingEnrollments = 0;
+			pendingAppealCount = 0;
 			StateHasChanged();
 			try
 			{
@@ -882,7 +924,7 @@ namespace Attencial.Client.Pages
 								PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 							}) ?? new List<ProfessorSessionDto>();
 							course.TotalSessions = list.Count;
-							course.LastSessionDate = ((list.Count > 0) ? new DateTime?(list.Min((ProfessorSessionDto s) => s.StartTime)) : ((DateTime?)null));
+							course.LastSessionDate = ((list.Count > 0) ? new DateTime?(list.Max((ProfessorSessionDto s) => s.StartTime)) : ((DateTime?)null));
 							todaySessionCount += list.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
 						}
 						HttpRequestMessage httpRequestMessage3 = new HttpRequestMessage(HttpMethod.Get, $"api/attendance/courses/{course.Id}/enrolled-students");
@@ -958,11 +1000,16 @@ namespace Attencial.Client.Pages
 			{
 				return;
 			}
+			await LoadCourseSessions(course);
+		}
+
+		private async Task LoadCourseSessions(CourseItem course)
+		{
 			course.SessionHistory = new List<SessionHistoryItem>();
 			StateHasChanged();
 			try
 			{
-				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{courseId}/sessions");
+				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{course.Id}/sessions");
 				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 				HttpResponseMessage httpResponseMessage = await Http.SendAsync(httpRequestMessage);
 				if (!httpResponseMessage.IsSuccessStatusCode)
@@ -991,6 +1038,52 @@ namespace Attencial.Client.Pages
 			finally
 			{
 				StateHasChanged();
+			}
+		}
+
+		private async Task ReloadDashboard(bool preserveExpandedCourse = false)
+		{
+			int preservedExpandedCourseId = preserveExpandedCourse ? expandedCourseId : 0;
+			string preservedActiveTab = "sessions";
+			if (preserveExpandedCourse)
+			{
+				CourseItem course = courses.FirstOrDefault((CourseItem c) => c.Id == preservedExpandedCourseId);
+				if (course != null)
+				{
+					preservedActiveTab = course.ActiveTab;
+				}
+			}
+			await LoadAllData();
+			if (!preserveExpandedCourse || preservedExpandedCourseId == 0)
+			{
+				return;
+			}
+			CourseItem refreshedCourse = courses.FirstOrDefault((CourseItem c) => c.Id == preservedExpandedCourseId);
+			if (refreshedCourse == null)
+			{
+				expandedCourseId = 0;
+				return;
+			}
+			expandedCourseId = preservedExpandedCourseId;
+			refreshedCourse.ActiveTab = preservedActiveTab;
+			refreshedCourse.SessionHistory = null;
+			refreshedCourse.Roster = null;
+			refreshedCourse.AbuseLogs = null;
+			refreshedCourse.AttendanceData = null;
+			switch (preservedActiveTab)
+			{
+				case "roster":
+					await LoadRoster(refreshedCourse);
+					break;
+				case "abuse":
+					await LoadAbuseLogs(refreshedCourse);
+					break;
+				case "attendance":
+					await LoadAttendanceView(refreshedCourse);
+					break;
+				default:
+					await LoadCourseSessions(refreshedCourse);
+					break;
 			}
 		}
 
@@ -1165,17 +1258,7 @@ namespace Attencial.Client.Pages
 				if (httpResponseMessage.IsSuccessStatusCode)
 				{
 					sessionToDelete = 0;
-					CourseItem courseItem = courses.FirstOrDefault((CourseItem c) => c.Id == expandedCourseId);
-					if (courseItem?.SessionHistory != null)
-					{
-						SessionHistoryItem sessionHistoryItem = courseItem.SessionHistory.FirstOrDefault((SessionHistoryItem s) => s.SessionId == sessionId);
-						if (sessionHistoryItem != null)
-						{
-							courseItem.SessionHistory.Remove(sessionHistoryItem);
-							courseItem.TotalSessions--;
-						}
-					}
-					StateHasChanged();
+					await ReloadDashboard(preserveExpandedCourse: true);
 				}
 				else
 				{
@@ -1268,7 +1351,7 @@ namespace Attencial.Client.Pages
 				if ((await Http.SendAsync(httpRequestMessage)).IsSuccessStatusCode)
 				{
 					overrideSessionId = 0;
-					await ToggleCourse(expandedCourseId);
+					await ReloadDashboard(preserveExpandedCourse: true);
 				}
 			}
 			catch (Exception ex)
@@ -1345,6 +1428,34 @@ namespace Attencial.Client.Pages
 			catch (Exception ex)
 			{
 				errorMessage = "Error: " + ex.Message;
+			}
+		}
+
+		private async Task DeleteCourse(int courseId)
+		{
+			try
+			{
+				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, $"api/courses/{courseId}");
+				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+				var response = await Http.SendAsync(httpRequestMessage);
+				if (response.IsSuccessStatusCode)
+				{
+					courseToDelete = 0;
+					expandedCourseId = 0;
+					await ReloadDashboard();
+				}
+				else
+				{
+					errorMessage = "Failed to delete course: " + response.StatusCode;
+				}
+			}
+			catch (Exception ex)
+			{
+				errorMessage = "Error deleting course: " + ex.Message;
+			}
+			finally
+			{
+				StateHasChanged();
 			}
 		}
 	}

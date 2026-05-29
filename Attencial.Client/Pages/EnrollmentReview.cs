@@ -77,7 +77,7 @@ namespace Attencial.Client.Pages
 			}
 			if (isLoading)
 			{
-				__builder.AddMarkupContent(22, "<div class=\"card-neo text-center py-12\"><span class=\"material-symbols-outlined animate-spin text-primary mb-3 block\">refresh</span>\n                    <p class=\"text-body-md text-on-surface-variant\">Loading pending enrollment requests...</p></div>");
+				__builder.AddMarkupContent(22, "<div class=\"card-neo text-center py-12\"><div class=\"spinner-ring-lg mb-3\"></div>\n                    <p class=\"text-body-md text-on-surface-variant\">Loading pending enrollment requests...</p></div>");
 			}
 			else if (requests.Count == 0)
 			{
@@ -155,7 +155,7 @@ namespace Attencial.Client.Pages
 						__builder.AddAttribute(70, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => Approve(req.Id)));
 						if (submittingId == req.Id)
 						{
-							__builder.AddMarkupContent(71, "<span class=\"material-symbols-outlined animate-spin\">refresh</span>");
+							__builder.AddMarkupContent(71, "<span class=\"spinner-ring-sm mr-2\"></span>");
 						}
 						else
 						{
@@ -184,7 +184,7 @@ namespace Attencial.Client.Pages
 						__builder.AddAttribute(85, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => Reject(req.Id)));
 						if (submittingId == req.Id)
 						{
-							__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined animate-spin\">refresh</span>");
+							__builder.AddMarkupContent(86, "<span class=\"spinner-ring-sm mr-2\"></span>");
 						}
 						else
 						{

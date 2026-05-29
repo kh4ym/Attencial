@@ -30,4 +30,5 @@ public class AttendanceSessionDto
     public int SessionId { get; set; }
     public DateTime Date { get; set; }
     public bool IsPresent { get; set; }
+    public string? AppealStatus { get; set; }
 }

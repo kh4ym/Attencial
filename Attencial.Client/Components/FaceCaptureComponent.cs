@@ -215,7 +215,7 @@ namespace Attencial.Client.Components
 					__builder.AddAttribute(89, "class", "w-full bg-on-surface text-background font-label-caps py-6 px-8 hover:bg-primary transition-all duration-300 flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed");
 					if (isSubmitting)
 					{
-						__builder.AddMarkupContent(90, "<span class=\"material-symbols-outlined animate-spin\">sync</span>\n                    ");
+						__builder.AddMarkupContent(90, "<span class=\"spinner-ring-sm mr-2\"></span>\n                    ");
 						__builder.AddMarkupContent(91, "<span>Enrolling...</span>");
 					}
 					else

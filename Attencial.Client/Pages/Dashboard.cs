@@ -42,6 +42,14 @@ namespace Attencial.Client.Pages
 
 		private int sessionsAttended;
 
+		private int professorActiveCourses;
+
+		private int professorTodaySessions;
+
+		private int professorPendingEnrollments;
+
+		private int professorPendingAppeals;
+
 		private StudentAttendanceSummaryDto? studentSummary;
 
 		private Dictionary<int, bool> expandedCourses = new Dictionary<int, bool>();
@@ -49,19 +57,7 @@ namespace Attencial.Client.Pages
 		private bool hasAnimated;
 		private string greeting = "Good morning";
 
-		private bool showAppealForm;
 
-		private int appealSessionId;
-
-		private string appealCourseName = string.Empty;
-
-		private string appealReason = string.Empty;
-
-		private string appealMessage = string.Empty;
-
-		private bool isSubmittingAppeal;
-
-		private int monthlyAppealCount;
 
 		[Inject]
 		private NavigationManager Nav { get; set; }
@@ -82,19 +78,19 @@ namespace Attencial.Client.Pages
 			__builder.CloseComponent();
 			if (isLoading)
 			{
-				__builder.AddMarkupContent(3, "<div class=\"canvas-bg min-h-screen flex items-center justify-center\"><div class=\"text-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-4xl mb-4 block\">progress_activity</span>\n            <p class=\"font-label-caps text-label-caps text-on-surface-variant\">Loading dashboard...</p></div></div>");
+				__builder.AddMarkupContent(3, "<div class=\"canvas-bg flex items-center justify-center\" style=\"min-height: calc(100vh - 4rem);\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n            <p class=\"font-label-caps text-label-caps text-on-surface-variant\">Loading dashboard...</p></div></div>");
 			}
 			else if (!isAuthorized)
 			{
-				__builder.AddMarkupContent(4, "<div class=\"canvas-bg min-h-screen flex items-center justify-center\"><p class=\"font-body-md text-body-md text-on-surface-variant\">Redirecting to login...</p></div>");
+				__builder.AddMarkupContent(4, "<div class=\"canvas-bg flex items-center justify-center\" style=\"min-height: calc(100vh - 4rem);\"><p class=\"font-body-md text-body-md text-on-surface-variant\">Redirecting to login...</p></div>");
 			}
 			else
 			{
 				__builder.OpenElement(5, "div");
-				__builder.AddAttribute(6, "class", "canvas-bg min-h-screen");
+				__builder.AddAttribute(6, "class", "canvas-bg min-h-screen animate-fade-in");
 				__builder.OpenElement(7, "main");
-				__builder.AddAttribute(8, "class", "pt-8 pb-20 px-margin-desktop max-w-max-width mx-auto relative overflow-hidden");
-				__builder.AddMarkupContent(9, "<div class=\"absolute top-20 right-[-5%] w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10\"></div>\n            <div class=\"absolute bottom-[-10%] left-[-5%] w-64 h-64 border-[40px] border-tertiary/5 rounded-full -z-10\"></div>");
+				__builder.AddAttribute(8, "class", "pt-8 pb-20 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto relative overflow-hidden");
+				__builder.AddMarkupContent(9, "");
 				if (!string.IsNullOrEmpty(loadError))
 				{
 					__builder.OpenElement(10, "div");
@@ -107,11 +103,11 @@ namespace Attencial.Client.Pages
 					__builder.CloseElement();
 				}
 				__builder.OpenElement(16, "div");
-				__builder.AddAttribute(17, "class", "mb-16 flex flex-col md:flex-row justify-between items-end gap-8 relative animate-fade-in");
+				__builder.AddAttribute(17, "class", "mb-12 md:mb-16 flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-8 relative animate-fade-in");
 				__builder.OpenElement(18, "div");
 				__builder.AddAttribute(19, "class", "max-w-2xl");
 				__builder.AddMarkupContent(20, "<span class=\"font-label-caps text-label-caps text-secondary tracking-widest block mb-4\"><span class=\"live-dot align-middle mr-2\"></span> LIVE DASHBOARD\n                    </span>\n                    ");
-				__builder.AddMarkupContent(21, "<h1 class=\"font-display-lg text-display-lg text-on-surface mb-2 animate-fade-in\">" + greeting + @"</h1>\n                    ");
+				__builder.AddMarkupContent(21, "<h1 class=\"font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface mb-2 animate-fade-in\">" + greeting + "</h1>\n                    ");
 				__builder.OpenElement(22, "p");
 				__builder.AddAttribute(23, "class", "font-body-lg text-body-lg text-on-surface-variant");
 				__builder.AddContent(24, userEmail);
@@ -119,9 +115,9 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.AddMarkupContent(25, "\n                ");
 				__builder.OpenElement(26, "div");
-				__builder.AddAttribute(27, "class", "flex items-center gap-4");
+				__builder.AddAttribute(27, "class", "flex w-full md:w-auto items-center gap-4");
 				__builder.OpenElement(28, "button");
-				__builder.AddAttribute(29, "class", "btn-neo-primary flex items-center gap-2");
+				__builder.AddAttribute(29, "class", "btn-neo-primary w-full md:w-auto flex items-center gap-2");
 				__builder.AddAttribute(30, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)RefreshData));
 				__builder.AddMarkupContent(31, "<span class=\"material-symbols-outlined text-[18px]\">refresh</span>\n                        Refresh\n                    ");
 				__builder.CloseElement();
@@ -129,32 +125,117 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.AddMarkupContent(32, "\n\n            ");
 				__builder.OpenElement(33, "div");
-				__builder.AddAttribute(34, "class", "grid grid-cols-1 sm:grid-cols-2 " + ((userRole == "Student") ? "lg:grid-cols-4" : "lg:grid-cols-3") + " gap-6 mb-16 animate-fade-in delay-1");
-				if (userRole == "Student")
+				__builder.AddAttribute(34, "class", "grid grid-cols-1 sm:grid-cols-2 " + ((userRole == "Student" || userRole == "Professor") ? "lg:grid-cols-4" : "lg:grid-cols-3") + " gap-6 mb-16 animate-fade-in delay-1");
+				if (userRole == "Professor")
 				{
 					__builder.OpenElement(35, "div");
 					__builder.AddAttribute(36, "class", "stat-neo group hover:border-primary transition-colors");
-					__builder.AddMarkupContent(37, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">verified</span>\n                        Face Enrollment\n                    </span>\n                    ");
+					__builder.AddMarkupContent(37, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">menu_book</span>\n                        Active Courses\n                    </span>\n                    ");
 					__builder.OpenElement(38, "div");
 					__builder.AddAttribute(39, "class", "stat-neo-value");
-					__builder.AddAttribute(40, "id", "statEnrollment");
-					__builder.AddContent(41, enrollmentStatus);
+					__builder.AddAttribute(40, "id", "statProfCourses");
+					__builder.AddContent(41, professorActiveCourses);
 					__builder.CloseElement();
 					__builder.AddMarkupContent(42, "\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    ");
 					__builder.OpenElement(43, "p");
 					__builder.AddAttribute(44, "class", "font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1");
 					__builder.OpenElement(45, "span");
 					__builder.AddAttribute(46, "class", "material-symbols-outlined text-[14px]");
-					__builder.AddContent(47, isEnrolled ? "check_circle" : "error");
+					__builder.AddContent(47, "dashboard");
 					__builder.CloseElement();
 					__builder.AddMarkupContent(48, "\n                        ");
-					__builder.AddContent(49, isEnrolled ? "Ready for attendance" : "Enrollment required");
+					__builder.AddContent(49, "Assigned this term");
+					__builder.CloseElement();
+					__builder.CloseElement();
+					__builder.AddMarkupContent(50, "\n                ");
+					__builder.OpenElement(51, "div");
+					__builder.AddAttribute(52, "class", "stat-neo group hover:border-tertiary transition-colors");
+					__builder.AddMarkupContent(53, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">event</span>\n                        Today's Sessions\n                    </span>\n                    ");
+					__builder.OpenElement(54, "div");
+					__builder.AddAttribute(55, "class", "stat-neo-value");
+					__builder.AddAttribute(56, "id", "statProfSessions");
+					__builder.AddContent(57, professorTodaySessions);
+					__builder.CloseElement();
+					__builder.AddMarkupContent(58, "\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    ");
+					__builder.OpenElement(59, "p");
+					__builder.AddAttribute(60, "class", "font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1");
+					__builder.OpenElement(61, "span");
+					__builder.AddAttribute(62, "class", "material-symbols-outlined text-[14px]");
+					__builder.AddContent(63, (professorTodaySessions > 0) ? "play_circle" : "radio_button_unchecked");
+					__builder.CloseElement();
+					__builder.AddMarkupContent(64, "\n                        ");
+					__builder.AddContent(65, (professorTodaySessions > 0) ? "Active today" : "None yet");
+					__builder.CloseElement();
+					__builder.CloseElement();
+					__builder.AddMarkupContent(66, "\n                ");
+					__builder.OpenElement(67, "div");
+					__builder.AddAttribute(68, "class", "stat-neo group hover:border-primary transition-colors");
+					__builder.AddMarkupContent(69, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">how_to_reg</span>\n                        Pending Enrollments\n                    </span>\n                    ");
+					__builder.OpenElement(70, "div");
+					__builder.AddAttribute(71, "class", "stat-neo-value");
+					__builder.AddAttribute(72, "id", "statProfPendingEnrollments");
+					__builder.AddContent(73, professorPendingEnrollments);
+					__builder.CloseElement();
+					__builder.AddMarkupContent(74, "\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    ");
+					__builder.OpenElement(75, "p");
+					__builder.AddAttribute(76, "class", "font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1");
+					__builder.OpenElement(77, "span");
+					__builder.AddAttribute(78, "class", "material-symbols-outlined text-[14px]");
+					__builder.AddContent(79, (professorPendingEnrollments > 0) ? "flag" : "check_circle");
+					__builder.CloseElement();
+					__builder.AddMarkupContent(80, "\n                        ");
+					__builder.AddContent(81, professorPendingEnrollments);
+					__builder.CloseElement();
+					__builder.CloseElement();
+					__builder.AddMarkupContent(82, "\n                ");
+					__builder.OpenElement(83, "div");
+					__builder.AddAttribute(84, "class", "stat-neo group hover:border-primary transition-colors");
+					__builder.AddMarkupContent(85, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">rate_review</span>\n                        Pending Appeals\n                    </span>\n                    ");
+					__builder.OpenElement(86, "div");
+					__builder.AddAttribute(87, "class", "stat-neo-value");
+					__builder.AddAttribute(88, "id", "statProfPendingAppeals");
+					__builder.AddContent(89, professorPendingAppeals);
+					__builder.CloseElement();
+					__builder.AddMarkupContent(90, "\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    ");
+					__builder.OpenElement(91, "p");
+					__builder.AddAttribute(92, "class", "font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1");
+					__builder.OpenElement(93, "span");
+					__builder.AddAttribute(94, "class", "material-symbols-outlined text-[14px]");
+					__builder.AddContent(95, (professorPendingAppeals > 0) ? "warning" : "check_circle");
+					__builder.CloseElement();
+					__builder.AddMarkupContent(96, "\n                        ");
+					__builder.AddContent(97, "Needs review");
 					__builder.CloseElement();
 					__builder.CloseElement();
 				}
-				__builder.AddMarkupContent(50, "<div class=\"stat-neo group hover:border-primary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">menu_book</span>\n                        Total Courses\n                    </span>\n                    <div class=\"stat-neo-value\" id=\"statCourses\">0</div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">arrow_upward</span>\n                        Active this semester\n                    </p></div>\n\n                ");
-				__builder.AddMarkupContent(51, "<div class=\"stat-neo group hover:border-tertiary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">trending_up</span>\n                        Attendance %\n                    </span>\n                    <div class=\"stat-neo-value\"><span id=\"statAttendance\">0</span>\n                        <span class=\"text-[32px] font-headline-md text-on-surface\">%</span></div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">check_circle</span>\n                        Across all courses\n                    </p></div>\n\n                ");
-				__builder.AddMarkupContent(52, "<div class=\"stat-neo group hover:border-primary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">calendar_month</span>\n                        Sessions Attended\n                    </span>\n                    <div class=\"stat-neo-value\" id=\"statSessions\">0</div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">schedule</span>\n                        This semester\n                    </p></div>");
+				else
+				{
+					if (userRole == "Student")
+					{
+						__builder.OpenElement(98, "div");
+						__builder.AddAttribute(99, "class", "stat-neo group hover:border-primary transition-colors");
+						__builder.AddMarkupContent(100, "<span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">verified</span>\n                        Face Enrollment\n                    </span>\n                    ");
+						__builder.OpenElement(101, "div");
+						__builder.AddAttribute(102, "class", "stat-neo-value");
+						__builder.AddAttribute(103, "id", "statEnrollment");
+						__builder.AddContent(104, enrollmentStatus);
+						__builder.CloseElement();
+						__builder.AddMarkupContent(105, "\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    ");
+						__builder.OpenElement(106, "p");
+						__builder.AddAttribute(107, "class", "font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1");
+						__builder.OpenElement(108, "span");
+						__builder.AddAttribute(109, "class", "material-symbols-outlined text-[14px]");
+						__builder.AddContent(110, isEnrolled ? "check_circle" : "error");
+						__builder.CloseElement();
+						__builder.AddMarkupContent(111, "\n                        ");
+						__builder.AddContent(112, isEnrolled ? "Ready for attendance" : "Enrollment required");
+						__builder.CloseElement();
+						__builder.CloseElement();
+					}
+					__builder.AddMarkupContent(113, "<div class=\"stat-neo group hover:border-primary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">menu_book</span>\n                        Total Courses\n                    </span>\n                    <div class=\"stat-neo-value\" id=\"statCourses\">0</div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">arrow_upward</span>\n                        Active this semester\n                    </p></div>\n\n                ");
+					__builder.AddMarkupContent(114, "<div class=\"stat-neo group hover:border-tertiary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">trending_up</span>\n                        Attendance %\n                    </span>\n                    <div class=\"stat-neo-value\"><span id=\"statAttendance\">0</span>\n                        <span class=\"text-[32px] font-headline-md text-on-surface\">%</span></div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">check_circle</span>\n                        Across all courses\n                    </p></div>\n\n                ");
+					__builder.AddMarkupContent(115, "<div class=\"stat-neo group hover:border-primary transition-colors\"><span class=\"stat-neo-label flex items-center gap-2\"><span class=\"material-symbols-outlined text-[16px]\">calendar_month</span>\n                        Sessions Attended\n                    </span>\n                    <div class=\"stat-neo-value\" id=\"statSessions\">0</div>\n                    <div class=\"w-full h-[1px] bg-outline-variant/30 mt-6 mb-4\"></div>\n                    <p class=\"font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1\"><span class=\"material-symbols-outlined text-[14px]\">schedule</span>\n                        This semester\n                    </p></div>");
+				}
 				__builder.CloseElement();
 				if (userRole == "Student")
 				{
@@ -163,7 +244,7 @@ namespace Attencial.Client.Pages
 					__builder.AddMarkupContent(55, "<div class=\"flex items-center gap-3 mb-8 pb-4 border-b border-outline-variant/30\"><span class=\"material-symbols-outlined text-primary\">assignment_turned_in</span>\n                        <h2 class=\"font-headline-md text-headline-md text-on-surface\">My Courses & Attendance</h2></div>");
 					if (studentSummary == null || studentSummary.CourseAttendance.Count == 0)
 					{
-						__builder.AddMarkupContent(56, "<div class=\"border border-on-surface bg-surface p-12 text-center\"><span class=\"material-symbols-outlined text-5xl text-outline block mb-4\">assignment_late</span>\n                            <p class=\"font-body-md text-body-md text-on-surface-variant mb-6\">You are not currently enrolled in any courses.</p>\n                            <a href=\"courses\" class=\"btn-neo-outline inline-block no-underline\">Browse Courses</a></div>");
+						__builder.AddMarkupContent(56, "<div class=\"border border-on-surface bg-surface p-6 md:p-12 text-center\"><span class=\"material-symbols-outlined text-5xl text-outline block mb-4\">assignment_late</span>\n                            <p class=\"font-body-md text-body-md text-on-surface-variant mb-6\">You are not currently enrolled in any courses.</p>\n                            <a href=\"courses\" class=\"btn-neo-outline inline-flex no-underline\">Browse Courses</a></div>");
 					}
 					else
 					{
@@ -178,7 +259,7 @@ namespace Attencial.Client.Pages
 							__builder.AddAttribute(60, "class", "card-neo-hover");
 							__builder.AddAttribute(61, "style", "border-left: 4px solid " + text + ";");
 							__builder.OpenElement(62, "div");
-							__builder.AddAttribute(63, "class", "flex justify-between items-start mb-4");
+							__builder.AddAttribute(63, "class", "flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4");
 							__builder.OpenElement(64, "div");
 							__builder.OpenElement(65, "span");
 							__builder.AddAttribute(66, "class", "badge-neo mb-3 inline-block");
@@ -187,7 +268,7 @@ namespace Attencial.Client.Pages
 							__builder.CloseElement();
 							__builder.AddMarkupContent(69, "\n                                            ");
 							__builder.OpenElement(70, "h3");
-							__builder.AddAttribute(71, "class", "font-headline-md text-[22px] text-on-surface");
+							__builder.AddAttribute(71, "class", "font-headline-md text-[22px] text-on-surface break-words");
 							__builder.AddContent(72, course.CourseName);
 							__builder.CloseElement();
 							__builder.AddMarkupContent(73, "\n                                            ");
@@ -199,9 +280,9 @@ namespace Attencial.Client.Pages
 							__builder.CloseElement();
 							__builder.AddMarkupContent(78, "\n                                        ");
 							__builder.OpenElement(79, "div");
-							__builder.AddAttribute(80, "class", "text-right");
+							__builder.AddAttribute(80, "class", "text-left sm:text-right");
 							__builder.OpenElement(81, "span");
-							__builder.AddAttribute(82, "class", "font-display-lg text-[48px] leading-none");
+							__builder.AddAttribute(82, "class", "font-display-lg text-[40px] md:text-[48px] leading-none");
 							__builder.AddAttribute(83, "style", "color: " + text + ";");
 							__builder.AddContent(84, course.Percentage);
 							__builder.AddContent(85, "%");
@@ -261,23 +342,13 @@ namespace Attencial.Client.Pages
 									foreach (AttendanceSessionDto session in course.Sessions.Where(s => !s.IsPresent))
 									{
 										__builder.OpenElement(119, "div");
-										__builder.AddAttribute(120, "class", "flex justify-between items-center py-1");
+										__builder.AddAttribute(120, "class", "flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 py-2");
 										__builder.OpenElement(121, "div");
 										__builder.AddMarkupContent(122, "<span class=\"font-label-sm text-label-sm text-primary\"><span class=\"material-symbols-outlined text-[14px] align-middle\">cancel</span>\n                                                                    Missed\n                                                                </span>\n                                                                ");
 										__builder.OpenElement(123, "span");
 										__builder.AddAttribute(124, "class", "font-body-md text-[13px] text-on-surface-variant ml-3");
 										__builder.AddContent(125, session.Date.ToLocalTime().ToString("MMM dd, yyyy · hh:mm tt"));
 										__builder.CloseElement();
-										__builder.CloseElement();
-										__builder.AddMarkupContent(126, "\n                                                            ");
-										__builder.OpenElement(127, "button");
-										__builder.AddAttribute(128, "class", "font-label-caps text-[10px] text-primary border border-primary px-2 py-1 hover:bg-primary hover:text-surface transition-colors cursor-pointer");
-										__builder.AddAttribute(129, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)delegate
-										{
-											ShowAppealForm(session.SessionId, course.CourseName);
-										}));
-										__builder.AddEventStopPropagationAttribute(130, "onclick", value: true);
-										__builder.AddMarkupContent(131, "\n                                                                APPEAL\n                                                            ");
 										__builder.CloseElement();
 										__builder.CloseElement();
 									}
@@ -331,65 +402,6 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.CloseElement();
 			}
-			if (showAppealForm)
-			{
-				__builder.OpenElement(161, "div");
-				__builder.AddAttribute(162, "class", "fixed inset-0 z-50 flex items-center justify-center bg-black/30");
-				__builder.AddAttribute(163, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)CloseAppealForm));
-				__builder.OpenElement(164, "div");
-				__builder.AddAttribute(165, "class", "card-neo-raised p-8 max-w-md w-full mx-4 bg-surface");
-				__builder.AddEventStopPropagationAttribute(166, "onclick", value: true);
-				__builder.AddMarkupContent(167, "<h3 class=\"font-headline-md text-headline-md text-on-surface mb-2\">Appeal Attendance</h3>\n            ");
-				__builder.OpenElement(168, "p");
-				__builder.AddAttribute(169, "class", "font-body-md text-on-surface-variant mb-4");
-				__builder.AddContent(170, "Course: ");
-				__builder.AddContent(171, appealCourseName);
-				__builder.CloseElement();
-				__builder.AddMarkupContent(172, "\n            ");
-				__builder.OpenElement(173, "p");
-				__builder.AddAttribute(174, "class", "font-label-sm text-on-surface-variant mb-6");
-				__builder.AddContent(175, "Appeals used this month: ");
-				__builder.AddContent(176, monthlyAppealCount);
-				__builder.AddContent(177, " / 5");
-				__builder.CloseElement();
-				__builder.AddMarkupContent(178, "\n            ");
-				__builder.OpenElement(179, "textarea");
-				__builder.AddAttribute(180, "class", "w-full border border-on-surface bg-transparent p-3 font-body-md text-on-surface placeholder:text-on-surface-variant/50 mb-4");
-				__builder.AddAttribute(181, "rows", "4");
-				__builder.AddAttribute(182, "placeholder", "Explain why your absence should be excused...");
-				__builder.AddAttribute(183, "value", BindConverter.FormatValue(appealReason));
-				__builder.AddAttribute(184, "onchange", EventCallback.Factory.CreateBinder(this, delegate(string? __value)
-				{
-					appealReason = __value;
-				}, appealReason));
-				__builder.SetUpdatesAttributeName("value");
-				__builder.CloseElement();
-				if (!string.IsNullOrEmpty(appealMessage))
-				{
-					__builder.OpenElement(185, "div");
-					__builder.AddAttribute(186, "class", "border border-error/30 p-3 mb-4 text-sm");
-					__builder.AddAttribute(187, "style", "background: rgba(186,26,26,0.04); color: var(--brand-error);");
-					__builder.AddContent(188, appealMessage);
-					__builder.CloseElement();
-				}
-				__builder.OpenElement(189, "div");
-				__builder.AddAttribute(190, "class", "flex gap-3");
-				__builder.OpenElement(191, "button");
-				__builder.AddAttribute(192, "class", "btn-neo-primary flex-1");
-				__builder.AddAttribute(193, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)SubmitAppeal));
-				__builder.AddAttribute(194, "disabled", isSubmittingAppeal);
-				__builder.AddContent(195, isSubmittingAppeal ? "Submitting..." : "Submit Appeal");
-				__builder.CloseElement();
-				__builder.AddMarkupContent(196, "\n                ");
-				__builder.OpenElement(197, "button");
-				__builder.AddAttribute(198, "class", "btn-neo-outline flex-1");
-				__builder.AddAttribute(199, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)CloseAppealForm));
-				__builder.AddContent(200, "Cancel");
-				__builder.CloseElement();
-				__builder.CloseElement();
-				__builder.CloseElement();
-				__builder.CloseElement();
-			}
 		}
 
 		private void ToggleCourse(int courseId)
@@ -433,6 +445,11 @@ namespace Attencial.Client.Pages
 					userEmail = property.GetProperty("email").GetString() ?? string.Empty;
 					userRole = property.GetProperty("role").GetString() ?? "User";
 				}
+				if (userRole == "Professor")
+				{
+					await LoadProfessorSummary(token);
+					return;
+				}
 				if (userRole == "Student")
 				{
 					HttpRequestMessage httpRequestMessage2 = new HttpRequestMessage(HttpMethod.Get, "api/enrollment/status");
@@ -471,19 +488,6 @@ namespace Attencial.Client.Pages
 				{
 					loadError = $"Failed to load student attendance. Status: {httpResponseMessage3.StatusCode}";
 				}
-				HttpRequestMessage httpRequestMessage4 = new HttpRequestMessage(HttpMethod.Get, "api/students/me/appeals");
-				httpRequestMessage4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-				HttpResponseMessage httpResponseMessage4 = await Http.SendAsync(httpRequestMessage4);
-				if (!httpResponseMessage4.IsSuccessStatusCode)
-				{
-					return;
-				}
-				using JsonDocument jsonDocument3 = JsonDocument.Parse(await httpResponseMessage4.Content.ReadAsStringAsync());
-				monthlyAppealCount = jsonDocument3.RootElement.GetProperty("data").EnumerateArray().Count(delegate(JsonElement a)
-				{
-					DateTime dateTime = a.GetProperty("createdAt").GetDateTime();
-					return dateTime.Year == DateTime.UtcNow.Year && dateTime.Month == DateTime.UtcNow.Month;
-				});
 			}
 			catch (Exception ex)
 			{
@@ -496,14 +500,97 @@ namespace Attencial.Client.Pages
 			}
 		}
 
+		private async Task LoadProfessorSummary(string token)
+		{
+			professorActiveCourses = 0;
+			professorTodaySessions = 0;
+			professorPendingEnrollments = 0;
+			professorPendingAppeals = 0;
+			try
+			{
+				HttpRequestMessage coursesRequest = new HttpRequestMessage(HttpMethod.Get, "api/attendance/professor/courses");
+				coursesRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				HttpResponseMessage coursesResponse = await Http.SendAsync(coursesRequest);
+				if (!coursesResponse.IsSuccessStatusCode)
+				{
+					if (coursesResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+					{
+						loadError = "Professor profile required.";
+						return;
+					}
+					loadError = $"Failed to load professor courses. Status: {coursesResponse.StatusCode}";
+					return;
+				}
+				using JsonDocument coursesDoc = JsonDocument.Parse(await coursesResponse.Content.ReadAsStringAsync());
+				List<int> courseIds = new List<int>();
+				foreach (JsonElement item in coursesDoc.RootElement.GetProperty("data").EnumerateArray())
+				{
+					courseIds.Add(item.GetProperty("id").GetInt32());
+				}
+				professorActiveCourses = courseIds.Count;
+				DateTime today = DateTime.UtcNow.Date;
+				foreach (int courseId in courseIds)
+				{
+					HttpRequestMessage sessionsRequest = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{courseId}/sessions");
+					sessionsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+					HttpResponseMessage sessionsResponse = await Http.SendAsync(sessionsRequest);
+					if (!sessionsResponse.IsSuccessStatusCode)
+					{
+						continue;
+					}
+					using JsonDocument sessionsDoc = JsonDocument.Parse(await sessionsResponse.Content.ReadAsStringAsync());
+					List<ProfessorSessionDto> sessions = JsonSerializer.Deserialize<List<ProfessorSessionDto>>(sessionsDoc.RootElement.GetProperty("data").GetRawText(), new JsonSerializerOptions
+					{
+						PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+					}) ?? new List<ProfessorSessionDto>();
+					professorTodaySessions += sessions.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
+				}
+				HttpRequestMessage enrollmentsRequest = new HttpRequestMessage(HttpMethod.Get, "api/courses/enrollment-requests/pending");
+				enrollmentsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				HttpResponseMessage enrollmentsResponse = await Http.SendAsync(enrollmentsRequest);
+				if (enrollmentsResponse.IsSuccessStatusCode)
+				{
+					using JsonDocument enrollmentsDoc = JsonDocument.Parse(await enrollmentsResponse.Content.ReadAsStringAsync());
+					professorPendingEnrollments = enrollmentsDoc.RootElement.GetProperty("data").EnumerateArray().Count();
+				}
+				HttpRequestMessage appealsRequest = new HttpRequestMessage(HttpMethod.Get, "api/professor/appeals/pending");
+				appealsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				HttpResponseMessage appealsResponse = await Http.SendAsync(appealsRequest);
+				if (appealsResponse.IsSuccessStatusCode)
+				{
+					using JsonDocument appealsDoc = JsonDocument.Parse(await appealsResponse.Content.ReadAsStringAsync());
+					professorPendingAppeals = appealsDoc.RootElement.GetProperty("data").EnumerateArray().Count();
+				}
+			}
+			catch (Exception ex)
+			{
+				loadError = "Connection error: " + ex.Message;
+			}
+			finally
+			{
+				isLoading = false;
+				StateHasChanged();
+			}
+		}
+
 		protected override async Task OnAfterRenderAsync(bool firstRender)
 		{
 			if (!isLoading && isAuthorized && !hasAnimated)
 			{
 				hasAnimated = true;
-				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statCourses", totalCourses, 1500);
-				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statAttendance", attendanceRate, 1800);
-				await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSessions", sessionsAttended, 1600);
+				if (userRole == "Professor")
+				{
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statProfCourses", professorActiveCourses, 1500);
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statProfSessions", professorTodaySessions, 1600);
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statProfPendingEnrollments", professorPendingEnrollments, 1700);
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statProfPendingAppeals", professorPendingAppeals, 1800);
+				}
+				else
+				{
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statCourses", totalCourses, 1500);
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statAttendance", attendanceRate, 1800);
+					await JS.InvokeVoidAsync("attencialAnimations.animateCounter", "statSessions", sessionsAttended, 1600);
+				}
 				int hour = DateTime.Now.Hour;
 				greeting = (hour < 12) ? "Good morning" : (hour < 17) ? "Good afternoon" : "Good evening";
 				StateHasChanged();
@@ -520,71 +607,10 @@ namespace Attencial.Client.Pages
 			}
 		}
 
-		private void ShowAppealForm(int sessionId, string courseName)
-		{
-			appealSessionId = sessionId;
-			appealCourseName = courseName;
-			appealReason = string.Empty;
-			appealMessage = string.Empty;
-			showAppealForm = true;
-			StateHasChanged();
-		}
-
-		private void CloseAppealForm()
-		{
-			showAppealForm = false;
-			StateHasChanged();
-		}
-
 		private async Task Logout()
 		{
 			await JS.InvokeVoidAsync("authStorage.removeToken");
 			Nav.NavigateTo("/login", forceLoad: true);
-		}
-
-		private async Task SubmitAppeal()
-		{
-			if (string.IsNullOrWhiteSpace(appealReason))
-			{
-				appealMessage = "Please provide a reason.";
-				return;
-			}
-			isSubmittingAppeal = true;
-			appealMessage = string.Empty;
-			StateHasChanged();
-			try
-			{
-				string parameter = await JSRuntimeExtensions.InvokeAsync<string>(JS, "authStorage.getToken", Array.Empty<object>());
-				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/students/me/appeal");
-				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", parameter);
-				httpRequestMessage.Content = JsonContent.Create(new
-				{
-					sessionId = appealSessionId,
-				reason = appealReason.Trim(),
-					courseName = appealCourseName,
-				});
-				HttpResponseMessage res = await Http.SendAsync(httpRequestMessage);
-				ApiResponse<string> apiResponse = await res.Content.ReadFromJsonAsync<ApiResponse<string>>();
-				if (res.IsSuccessStatusCode)
-				{
-					showAppealForm = false;
-			StateHasChanged();
-					monthlyAppealCount++;
-				}
-				else
-				{
-					appealMessage = apiResponse?.Message ?? "Failed to submit appeal.";
-				}
-			}
-			catch (Exception ex)
-			{
-				appealMessage = "Error: " + ex.Message;
-			}
-			finally
-			{
-				isSubmittingAppeal = false;
-				StateHasChanged();
-			}
 		}
 	}
 }

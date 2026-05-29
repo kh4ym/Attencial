@@ -73,12 +73,20 @@ public class StudentController : ControllerBase
             .OrderByDescending(s => s.StartTime)
             .ToListAsync();
 
-        // Single query: all attendance records for this student across all enrolled courses
-        var attendedSessionIds = await _context.AttendanceRecords
+        var appealStatuses = await _context.AttendanceAppeals
             .AsNoTracking()
-            .Where(ar => ar.StudentId == student.Id && courseIds.Contains(ar.Session.CourseId))
+            .Where(a => a.StudentId == student.Id)
+            .Select(a => new { a.SessionId, a.Status })
+            .ToListAsync();
+        var appealBySessionId = appealStatuses.ToDictionary(a => a.SessionId, a => a.Status);
+
+        // Single query: all attendance records for this student across all enrolled courses
+        var attendedSessionIds = (await _context.AttendanceRecords
+            .AsNoTracking()
+            .Where(ar => ar.StudentId == student.Id)
             .Select(ar => ar.SessionId)
-            .ToHashSetAsync();
+            .ToListAsync())
+            .ToHashSet();
 
         var courseAttendanceList = new List<StudentCourseAttendanceDto>();
         int totalSessionsAll = 0;
@@ -111,7 +119,8 @@ public class StudentController : ControllerBase
                 {
                     SessionId = s.Id,
                     Date = s.StartTime,
-                    IsPresent = attendedSessionIds.Contains(s.Id)
+                    IsPresent = attendedSessionIds.Contains(s.Id),
+                    AppealStatus = appealBySessionId.TryGetValue(s.Id, out var appealStatus) ? appealStatus : null
                 })
                 .ToList();
 
@@ -189,6 +198,9 @@ public class StudentController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Reason))
             return BadRequest(new ApiResponse<string> { Success = false, Message = "Reason is required." });
 
+        if (request.Reason.Trim().Length > 1000)
+            return BadRequest(new ApiResponse<string> { Success = false, Message = "Reason must be 1000 characters or fewer." });
+
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdClaim, out var userId))
             return Unauthorized();
@@ -199,6 +211,26 @@ public class StudentController : ControllerBase
         if (student is null)
             return NotFound(new ApiResponse<string> { Success = false, Message = "Student profile not found." });
 
+        var session = await _context.AttendanceSessions
+            .AsNoTracking()
+            .Include(s => s.Course)
+            .FirstOrDefaultAsync(s => s.Id == request.SessionId);
+
+        if (session is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Attendance session not found." });
+
+        var isEnrolled = await _context.Enrollments
+            .AnyAsync(e => e.StudentId == student.Id && e.CourseId == session.CourseId);
+
+        if (!isEnrolled)
+            return StatusCode(403, new ApiResponse<string> { Success = false, Message = "You can only appeal sessions for courses you are enrolled in." });
+
+        var alreadyMarked = await _context.AttendanceRecords
+            .AnyAsync(ar => ar.StudentId == student.Id && ar.SessionId == session.Id);
+
+        if (alreadyMarked)
+            return Conflict(new ApiResponse<string> { Success = false, Message = "You are already marked present for this session." });
+
         var existing = await _context.AttendanceAppeals
             .AnyAsync(a => a.StudentId == student.Id && a.SessionId == request.SessionId);
         if (existing)
@@ -208,7 +240,7 @@ public class StudentController : ControllerBase
         {
             StudentId = student.Id,
             SessionId = request.SessionId,
-            CourseName = request.CourseName,
+            CourseName = session.Course.Name,
             Reason = request.Reason.Trim()
         };
 

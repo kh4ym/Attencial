@@ -12,7 +12,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Use camelCase for all API responses so the client's GetProperty("data"),
+        // GetProperty("isEnrolled") etc. resolve correctly.
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddOpenApi();
 
 // Response compression (Brotli + Gzip)

@@ -171,9 +171,14 @@ public class ProfessorController : ControllerBase
         if (course is null)
             return NotFound(new ApiResponse<string> { Success = false, Message = "Course not found or access denied." });
 
+        var sessionIds = await _context.AttendanceSessions
+            .Where(s => s.CourseId == id)
+            .Select(s => s.Id)
+            .ToListAsync();
+
         var logs = await _context.AbuseLogs
             .Include(al => al.Student)
-            .Where(al => al.Session.CourseId == id)
+            .Where(al => al.SessionId != null && sessionIds.Contains(al.SessionId.Value))
             .OrderByDescending(al => al.CreatedAt)
             .Select(al => new AbuseLogResponseDto
             {
@@ -236,8 +241,9 @@ public class ProfessorController : ControllerBase
             .ToListAsync();
 
         // 4. Fetch all attendance records for these sessions
+        var sessionIdList = sessions.Select(s => s.Id).ToList();
         var records = await _context.AttendanceRecords
-            .Where(ar => ar.Session.CourseId == id)
+            .Where(ar => sessionIdList.Contains(ar.SessionId))
             .ToListAsync();
 
         // 5. Generate CSV Content
@@ -289,8 +295,20 @@ public class ProfessorController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> GetPendingAppeals()
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
         var appeals = await _context.AttendanceAppeals
             .Include(a => a.Student)
+            .Where(a => a.Status == "Pending")
+            .Where(a => _context.AttendanceSessions.Any(s => s.Id == a.SessionId && s.ProfessorId == professor.Id))
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new
             {
@@ -311,11 +329,11 @@ public class ProfessorController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> ApproveAppeal(int id)
     {
-        var appeal = await _context.AttendanceAppeals.FindAsync(id);
-        if (appeal is null)
-            return NotFound(new ApiResponse<string> { Success = false, Message = "Appeal not found." });
+        var (appeal, error) = await ResolveAppealForCurrentProfessor(id);
+        if (error is not null)
+            return error;
 
-        appeal.Status = "Approved";
+        appeal!.Status = "Approved";
 
         // Auto-mark attendance for the appealed session
         var alreadyMarked = await _context.AttendanceRecords
@@ -332,7 +350,14 @@ public class ProfessorController : ControllerBase
             });
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new ApiResponse<string> { Success = false, Message = "Attendance was already recorded for this appeal." });
+        }
         return Ok(new ApiResponse<string> { Success = true, Message = "Appeal approved." });
     }
 
@@ -340,12 +365,42 @@ public class ProfessorController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> RejectAppeal(int id)
     {
-        var appeal = await _context.AttendanceAppeals.FindAsync(id);
-        if (appeal is null)
-            return NotFound(new ApiResponse<string> { Success = false, Message = "Appeal not found." });
+        var (appeal, error) = await ResolveAppealForCurrentProfessor(id);
+        if (error is not null)
+            return error;
 
-        appeal.Status = "Rejected";
+        appeal!.Status = "Rejected";
         await _context.SaveChangesAsync();
         return Ok(new ApiResponse<string> { Success = true, Message = "Appeal rejected." });
+    }
+
+    private async Task<(AttendanceAppeal? appeal, IActionResult? error)> ResolveAppealForCurrentProfessor(int id)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return (null, Unauthorized());
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return (null, NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." }));
+
+        var appeal = await _context.AttendanceAppeals
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (appeal is null)
+            return (null, NotFound(new ApiResponse<string> { Success = false, Message = "Appeal not found." }));
+
+        var ownsSession = await _context.AttendanceSessions
+            .AnyAsync(s => s.Id == appeal.SessionId && s.ProfessorId == professor.Id);
+
+        if (!ownsSession)
+            return (null, Forbid());
+
+        if (appeal.Status != "Pending")
+            return (null, BadRequest(new ApiResponse<string> { Success = false, Message = $"This appeal has already been {appeal.Status.ToLower()}." }));
+
+        return (appeal, null);
     }
 }

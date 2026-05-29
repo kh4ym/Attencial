@@ -74,12 +74,12 @@ namespace Attencial.Client.Pages
 			}
 			__builder.OpenElement(23, "form");
 			__builder.AddAttribute(24, "onsubmit", EventCallback.Factory.Create<EventArgs>((object)this, (Func<Task>)HandleLogin));
-			__builder.AddAttribute(25, "class", "space-y-5");
+			__builder.AddAttribute(25, "class", "auth-form space-y-5");
 			__builder.OpenElement(26, "div");
 			__builder.AddAttribute(27, "class", "relative group");
 			__builder.AddMarkupContent(28, "<label class=\"block font-label-caps text-label-caps mb-1 text-on-surface-variant group-focus-within:text-primary transition-colors\">EMAIL</label>\n                        ");
 			__builder.OpenElement(29, "input");
-			__builder.AddAttribute(30, "class", "w-full bg-transparent border-0 border-b border-on-surface-variant/40 focus:ring-0 focus:border-primary focus:border-b-2 transition-all py-1.5 px-0 font-body-md placeholder:text-on-surface-variant/30");
+			__builder.AddAttribute(30, "class", "w-full bg-transparent border-0 border-b border-on-surface-variant/40 focus:ring-0 focus:border-primary focus:border-b-2 focus-visible:outline-none transition-all py-1.5 px-0 font-body-md placeholder:text-on-surface-variant/30");
 			__builder.AddAttribute(31, "placeholder", "name@academic.edu");
 			__builder.AddAttribute(32, "type", "email");
 			__builder.AddAttribute(33, "required");
@@ -102,7 +102,7 @@ namespace Attencial.Client.Pages
 			__builder.OpenElement(48, "div");
 			__builder.AddAttribute(49, "class", "relative");
 			__builder.OpenElement(50, "input");
-			__builder.AddAttribute(51, "class", "w-full bg-transparent border-0 border-b border-on-surface-variant/40 focus:ring-0 focus:border-primary focus:border-b-2 transition-all py-1.5 pr-8 px-0 font-body-md placeholder:text-on-surface-variant/30");
+			__builder.AddAttribute(51, "class", "w-full bg-transparent border-0 border-b border-on-surface-variant/40 focus:ring-0 focus:border-primary focus:border-b-2 focus-visible:outline-none transition-all py-1.5 pr-8 px-0 font-body-md placeholder:text-on-surface-variant/30");
 			__builder.AddAttribute(52, "placeholder", "••••••••");
 			__builder.AddAttribute(53, "type", showPassword ? "text" : "password");
 			__builder.AddAttribute(54, "required");

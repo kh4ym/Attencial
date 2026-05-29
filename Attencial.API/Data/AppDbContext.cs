@@ -36,6 +36,11 @@ public class AppDbContext : DbContext
             .HasIndex(ar => new { ar.SessionId, ar.StudentId })
             .IsUnique();
 
+        // One appeal per student per session
+        modelBuilder.Entity<AttendanceAppeal>()
+            .HasIndex(a => new { a.SessionId, a.StudentId })
+            .IsUnique();
+
         // One enrollment per student per course
         modelBuilder.Entity<Enrollment>()
             .HasIndex(e => new { e.StudentId, e.CourseId })

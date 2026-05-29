@@ -52,7 +52,7 @@ namespace Attencial.Client.Pages
 			__builder.AddAttribute(16, "class", "flex items-center gap-4 md:gap-6");
 			if (isLoggedIn)
 			{
-				__builder.AddMarkupContent(18, "<a class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" href=\"profile\" title=\"Profile\">person</a>");
+				__builder.AddMarkupContent(18, "<a class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" href=\"profile\" title=\"Profile\" aria-label=\"Profile\">person</a>");
 				__builder.OpenElement(185, "button");
 				__builder.AddAttribute(186, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)Logout));
 				__builder.AddAttribute(187, "class", "material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer");

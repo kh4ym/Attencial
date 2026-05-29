@@ -3,10 +3,17 @@ window.cameraInterop = {
 
     startCamera: async function (videoElementId) {
         const video = document.getElementById(videoElementId);
+        if (!video) {
+            throw new Error(`Camera element "${videoElementId}" was not found.`);
+        }
+        if (this.stream) {
+            this.stopCamera();
+        }
         this.stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "user" }  // Front camera
         });
         video.srcObject = this.stream;
+        await video.play();
     },
 
     captureFrame: function (videoElementId) {

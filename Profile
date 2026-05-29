@@ -1,0 +1,7 @@
+Attencial.Client/wwwroot/css/app.css:881:.mobile-nav-item .nav-label {
+Attencial.Client/Layout/NavMenu.cs:147:				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">" + dashLabel + "</span>");
+Attencial.Client/Layout/NavMenu.cs:157:					__builder.AddMarkupContent(91, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">Dashboard</span>");
+Attencial.Client/Layout/NavMenu.cs:170:						__builder.AddMarkupContent(224, "<span class=\"material-symbols-outlined nav-icon\">assignment_turned_in</span>\n                    <span class=\"nav-label\">Attendance</span>");
+Attencial.Client/Layout/NavMenu.cs:180:					__builder.AddMarkupContent(91, "<span class=\"material-symbols-outlined nav-icon\">play_circle</span>\n                    <span class=\"nav-label\">Session</span>");
+Attencial.Client/Layout/NavMenu.cs:190:					__builder.AddMarkupContent(96, "<span class=\"material-symbols-outlined nav-icon\">school</span>\n                    <span class=\"nav-label\">Courses</span>");
+Attencial.Client/Layout/NavMenu.cs:201:					__builder.AddMarkupContent(101, "<span class=\"material-symbols-outlined nav-icon\">rate_review</span>\n                    <span class=\"nav-label\">Review</span>");

@@ -28,6 +28,7 @@ public class Attendance : ComponentBase
     private int appealSessionId;
     private string appealCourseName = string.Empty;
     private string appealReason = string.Empty;
+    private bool isAppealSubmitted;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
     [Inject] private HttpClient Http { get; set; } = null!;
@@ -98,10 +99,9 @@ public class Attendance : ComponentBase
             var response = await Http.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
-                appealMessage = "Appeal submitted successfully!";
-                showAppealForm = false;
                 appealReason = string.Empty;
-		StateHasChanged();
+                isAppealSubmitted = true;
+                await LoadData();
             }
             else
             {
@@ -119,6 +119,7 @@ public class Attendance : ComponentBase
     private void CloseAppeal()
     {
         showAppealForm = false;
+        isAppealSubmitted = false;
         appealMessage = null;
         appealReason = string.Empty;
 		StateHasChanged();
@@ -132,24 +133,22 @@ public class Attendance : ComponentBase
 
         if (!isAuthorized)
         {
-            b.AddMarkupContent(3, "<div class=\"min-h-screen canvas-bg flex items-center justify-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-3xl\">refresh</span></div>");
+            b.AddMarkupContent(3, "<div class=\"min-h-screen canvas-bg flex items-center justify-center\"><div class=\"spinner-ring-lg\"></div></div>");
+            return;
+        }
+
+        if (isLoading)
+        {
+            b.AddMarkupContent(9, "<div class=\"canvas-bg flex items-center justify-center\" style=\"min-height: calc(100vh - 4rem);\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div><p class=\"font-label-caps text-on-surface-variant\">Loading attendance data...</p></div></div>");
             return;
         }
 
         b.OpenElement(4, "div");
-        b.AddAttribute(5, "class", "canvas-bg min-h-screen pb-24");
+        b.AddAttribute(5, "class", "canvas-bg min-h-screen pb-24 animate-fade-in");
 
         b.OpenElement(6, "div");
         b.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-8");
         b.AddMarkupContent(8, "<div class=\"mb-8\"><h1 class=\"font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface\">My Attendance</h1><div class=\"red-accent-line mt-3\"></div></div>");
-
-        if (isLoading)
-        {
-            b.AddMarkupContent(9, "<div class=\"text-center py-16\"><span class=\"material-symbols-outlined animate-spin text-primary text-3xl block mb-3\">refresh</span><p class=\"font-label-caps text-on-surface-variant\">Loading attendance data...</p></div>");
-            b.CloseElement();
-            b.CloseElement();
-            return;
-        }
 
         if (!string.IsNullOrEmpty(errorMessage))
         {
@@ -203,7 +202,8 @@ public class Attendance : ComponentBase
             b.OpenElement(baseIdx + 5, "div");
             b.AddAttribute(baseIdx + 6, "class", "flex min-w-0 items-start gap-3");
             b.OpenElement(baseIdx + 7, "span");
-            b.AddAttribute(baseIdx + 8, "class", "mt-2 h-3 w-3 flex-shrink-0 rounded-full inline-block " + (course.Status == "Green" ? "bg-tertiary" : course.Status == "Yellow" ? "bg-yellow-600" : "bg-primary"));
+            b.AddAttribute(baseIdx + 8, "class", "mt-2 h-3 w-3 flex-shrink-0 rounded-full inline-block");
+            b.AddAttribute(baseIdx + 9, "style", course.Status == "Green" ? "background-color: #2ecc71;" : course.Status == "Yellow" ? "background-color: #f1c40f;" : "background-color: #b0252b;");
             b.CloseElement();
             b.OpenElement(baseIdx + 9, "div");
             b.AddAttribute(baseIdx + 10, "class", "min-w-0");
@@ -247,7 +247,8 @@ public class Attendance : ComponentBase
             b.AddContent(baseIdx + 27, $"{course.AttendedSessions}/{course.TotalSessions} sessions attended");
             b.CloseElement();
             b.OpenElement(baseIdx + 28, "span");
-            b.AddAttribute(baseIdx + 29, "class", "badge-neo " + (course.Status == "Green" ? "badge-neo-success" : course.Status == "Yellow" ? "badge-neo-pending" : "badge-neo-active"));
+            b.AddAttribute(baseIdx + 29, "class", "badge-neo");
+            b.AddAttribute(baseIdx + 31, "style", course.Status == "Green" ? "color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08);" : course.Status == "Yellow" ? "color: #b0252b; border-color: #b0252b; background: #fbf9f6;" : "color: #b0252b; border-color: #b0252b; background: #b0252b;");
             b.AddContent(baseIdx + 30, course.Status);
             b.CloseElement();
             b.CloseElement();
@@ -286,12 +287,39 @@ public class Attendance : ComponentBase
 
                     if (!s.IsPresent)
                     {
-                        b.OpenElement(mIdx + 8, "button");
-                        b.AddAttribute(mIdx + 9, "class", "btn-neo-outline w-full text-xs py-1.5 px-3 flex items-center gap-1 sm:w-auto");
-                        b.AddAttribute(mIdx + 10, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ShowAppealForm(s.SessionId, course.CourseName)));
-                        b.AddAttribute(mIdx + 12, "onclick:stopPropagation", true);
-                        b.AddMarkupContent(mIdx + 11, "<span class=\"material-symbols-outlined text-sm\">rate_review</span> Appeal");
-                        b.CloseElement();
+                        if (string.IsNullOrEmpty(s.AppealStatus))
+                        {
+                            b.OpenElement(mIdx + 8, "button");
+                            b.AddAttribute(mIdx + 9, "class", "btn-neo-outline w-full text-xs py-1.5 px-3 flex items-center gap-1 sm:w-auto");
+                            b.AddAttribute(mIdx + 10, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ShowAppealForm(s.SessionId, course.CourseName)));
+                            b.AddAttribute(mIdx + 12, "onclick:stopPropagation", true);
+                            b.AddMarkupContent(mIdx + 11, "<span class=\"material-symbols-outlined text-sm\">rate_review</span> Appeal");
+                            b.CloseElement();
+                        }
+                        else if (s.AppealStatus == "Pending")
+                        {
+                            b.OpenElement(mIdx + 8, "span");
+                            b.AddAttribute(mIdx + 9, "class", "badge-neo badge-neo-pending text-xs py-1 px-3");
+                            b.AddAttribute(mIdx + 98, "style", "width: 140px; justify-content: center;");
+                            b.AddContent(mIdx + 10, "Appeal Pending");
+                            b.CloseElement();
+                        }
+                        else if (s.AppealStatus == "Rejected")
+                        {
+                            b.OpenElement(mIdx + 8, "span");
+                            b.AddAttribute(mIdx + 9, "class", "badge-neo badge-neo-active text-xs py-1 px-3");
+                            b.AddAttribute(mIdx + 98, "style", "width: 140px; justify-content: center;");
+                            b.AddContent(mIdx + 10, "Appeal Rejected");
+                            b.CloseElement();
+                        }
+                        else if (s.AppealStatus == "Approved" || s.AppealStatus == "Accepted")
+                        {
+                            b.OpenElement(mIdx + 8, "span");
+                            b.AddAttribute(mIdx + 9, "class", "badge-neo text-xs py-1 px-3");
+                            b.AddAttribute(mIdx + 98, "style", "width: 140px; justify-content: center; color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08);");
+                            b.AddContent(mIdx + 10, "Appeal Accepted");
+                            b.CloseElement();
+                        }
                     }
 
                     b.CloseElement();
@@ -312,55 +340,73 @@ public class Attendance : ComponentBase
             b.OpenElement(2000, "div");
             b.AddAttribute(2001, "class", "fixed inset-0 z-50 flex items-center justify-center bg-black/30");
 
-            b.OpenElement(2003, "div");
-            b.AddAttribute(2004, "class", "card-neo bg-surface max-w-md w-full mx-4 relative");
-
-
-            b.OpenElement(2009, "h3");
-            b.AddAttribute(2010, "class", "font-headline-md text-headline-md text-on-surface mb-2 pr-8");
-            b.AddContent(2011, "Appeal Missed Session");
-            b.CloseElement();
-
-            b.OpenElement(2012, "p");
-            b.AddAttribute(2013, "class", "font-label-sm text-on-surface-variant mb-4");
-            b.AddContent(2014, "Course: ");
-            b.OpenElement(2015, "strong");
-            b.AddContent(2016, appealCourseName);
-            b.CloseElement();
-            b.CloseElement();
-
-            if (!string.IsNullOrEmpty(appealMessage))
+            if (isAppealSubmitted)
             {
-                b.OpenElement(2017, "div");
-                b.AddAttribute(2018, "class", "border border-tertiary bg-surface-container-low p-3 mb-4");
-                b.AddContent(2019, appealMessage);
+                b.OpenElement(2003, "div");
+                b.AddAttribute(2004, "class", "card-neo bg-surface max-w-sm w-full mx-4 relative p-6 text-center animate-scale-up");
+                b.AddMarkupContent(2005, "<span class=\"material-symbols-outlined text-tertiary text-5xl mb-4 block\">check_circle</span>");
+                b.AddMarkupContent(2006, "<h3 class=\"font-headline-md text-headline-md text-on-surface mb-2\">Appeal Submitted</h3>");
+                b.AddMarkupContent(2007, "<p class=\"font-body-md text-on-surface-variant text-sm mb-6\">Your appeal has been successfully submitted to your professor for review.</p>");
+                b.OpenElement(2008, "button");
+                b.AddAttribute(2009, "class", "btn-neo-primary w-full text-sm");
+                b.AddAttribute(2010, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, CloseAppeal));
+                b.AddContent(2011, "Great!");
+                b.CloseElement();
+                b.CloseElement();
+            }
+            else
+            {
+                b.OpenElement(2003, "div");
+                b.AddAttribute(2004, "class", "card-neo bg-surface max-w-md w-full mx-4 relative");
+
+
+                b.OpenElement(2009, "h3");
+                b.AddAttribute(2010, "class", "font-headline-md text-headline-md text-on-surface mb-2 pr-8");
+                b.AddContent(2011, "Appeal Missed Session");
+                b.CloseElement();
+
+                b.OpenElement(2012, "p");
+                b.AddAttribute(2013, "class", "font-label-sm text-on-surface-variant mb-4");
+                b.AddContent(2014, "Course: ");
+                b.OpenElement(2015, "strong");
+                b.AddContent(2016, appealCourseName);
+                b.CloseElement();
+                b.CloseElement();
+
+                if (!string.IsNullOrEmpty(appealMessage))
+                {
+                    b.OpenElement(2017, "div");
+                    b.AddAttribute(2018, "class", "border border-tertiary bg-surface-container-low p-3 mb-4");
+                    b.AddContent(2019, appealMessage);
+                    b.CloseElement();
+                }
+
+                b.OpenElement(2020, "textarea");
+                b.AddAttribute(2021, "class", "form-neo w-full mb-4 focus:outline-none focus:ring-0");
+                b.AddAttribute(2022, "placeholder", "Explain why you missed this session...");
+                b.AddAttribute(2023, "rows", "3");
+                b.AddAttribute(2024, "value", appealReason);
+                b.AddAttribute(2025, "onchange", EventCallback.Factory.CreateBinder(this, (string? v) => appealReason = v ?? "", appealReason));
+                b.SetUpdatesAttributeName("value");
+                b.CloseElement();
+
+                b.OpenElement(2024, "div");
+                b.AddAttribute(2026, "class", "flex gap-3 justify-end");
+                b.OpenElement(2026, "button");
+                b.AddAttribute(2027, "class", "btn-neo-outline text-sm");
+                b.AddAttribute(2028, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, CloseAppeal));
+                b.AddContent(2029, "Cancel");
+                b.CloseElement();
+                b.OpenElement(2030, "button");
+                b.AddAttribute(2031, "class", "btn-neo-primary text-sm");
+                b.AddAttribute(2032, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, SubmitAppeal));
+                b.AddContent(2033, "Submit Appeal");
+                b.CloseElement();
+                b.CloseElement();
+
                 b.CloseElement();
             }
 
-            b.OpenElement(2020, "textarea");
-            b.AddAttribute(2021, "class", "form-neo w-full mb-4 focus:outline-none focus:ring-0");
-            b.AddAttribute(2022, "placeholder", "Explain why you missed this session...");
-            b.AddAttribute(2023, "rows", "3");
-            b.AddAttribute(2024, "value", appealReason);
-            b.AddAttribute(2025, "onchange", EventCallback.Factory.CreateBinder(this, (string? v) => appealReason = v ?? "", appealReason));
-            b.SetUpdatesAttributeName("value");
-            b.CloseElement();
-
-            b.OpenElement(2024, "div");
-            b.AddAttribute(2026, "class", "flex gap-3 justify-end");
-            b.OpenElement(2026, "button");
-            b.AddAttribute(2027, "class", "btn-neo-outline text-sm");
-            b.AddAttribute(2028, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, CloseAppeal));
-            b.AddContent(2029, "Cancel");
-            b.CloseElement();
-            b.OpenElement(2030, "button");
-            b.AddAttribute(2031, "class", "btn-neo-primary text-sm");
-            b.AddAttribute(2032, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, SubmitAppeal));
-            b.AddContent(2033, "Submit Appeal");
-            b.CloseElement();
-            b.CloseElement();
-
-            b.CloseElement();
             b.CloseElement();
         }
     }

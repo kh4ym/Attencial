@@ -66,16 +66,17 @@ namespace Attencial.Client.Pages
 			});
 			__builder.CloseComponent();
 			__builder.AddMarkupContent(3, "\n\n");
-			__builder.OpenElement(4, "div");
-			__builder.AddAttribute(5, "class", "canvas-bg min-h-screen pb-16");
-			__builder.OpenElement(6, "div");
-			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-8 animate-fade-in");
-			__builder.AddMarkupContent(8, "<div class=\"mb-8\"><span class=\"font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] block mb-2\">ACCOUNT</span>\n            <h1 class=\"font-display-lg text-display-lg text-on-surface\">Profile</h1></div>");
 			if (isLoading)
 			{
-				__builder.AddMarkupContent(9, "<div class=\"card-neo text-center py-12\"><span class=\"material-symbols-outlined animate-spin text-primary text-2xl block mb-2\">refresh</span>\n                <p class=\"font-label-sm text-on-surface-variant\">Loading profile...</p></div>");
+				__builder.AddMarkupContent(9, "<div class=\"canvas-bg flex items-center justify-center\" style=\"min-height: calc(100vh - 4rem);\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-2\"></div>\n                <p class=\"font-label-sm text-on-surface-variant\">Loading profile...</p></div></div>");
+				return;
 			}
-			else if (!string.IsNullOrEmpty(errorMessage))
+			__builder.OpenElement(4, "div");
+			__builder.AddAttribute(5, "class", "canvas-bg min-h-screen pb-16 animate-fade-in");
+			__builder.OpenElement(6, "div");
+			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-8");
+			__builder.AddMarkupContent(8, "<div class=\"mb-8\"><span class=\"font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] block mb-2\">ACCOUNT</span>\n            <h1 class=\"font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface\">Profile</h1></div>");
+			if (!string.IsNullOrEmpty(errorMessage))
 			{
 				__builder.OpenElement(10, "div");
 				__builder.AddAttribute(11, "class", "border border-error/30 p-4 mb-8 flex items-start gap-3");

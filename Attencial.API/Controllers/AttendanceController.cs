@@ -74,9 +74,12 @@ public class AttendanceController : ControllerBase
                 Message = "Course not found or you are not the professor of this course."
             });
 
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
         // Step 4: Deactivate any currently active session for this course
         // (only one active session per course at a time)
         var activeSessions = await _context.AttendanceSessions
+            .Include(s => s.Token)
             .Where(s => s.CourseId == course.Id && s.IsActive)
             .ToListAsync();
 
@@ -84,10 +87,12 @@ public class AttendanceController : ControllerBase
         {
             old.IsActive = false;
             old.EndTime = DateTime.UtcNow;
+            if (old.Token is not null)
+                old.Token.IsActive = false;
         }
 
         // Step 5: Generate a cryptographically secure 64-char token
-        var tokenBytes = RandomNumberGenerator.GetBytes(48); // 48 bytes → 64 Base64 chars
+        var tokenBytes = RandomNumberGenerator.GetBytes(48); // 48 bytes -> 64 Base64 chars
         var tokenString = Convert.ToBase64String(tokenBytes)
             .Replace("+", "-")
             .Replace("/", "_")
@@ -117,6 +122,7 @@ public class AttendanceController : ControllerBase
         };
         _context.OnlineAttendanceTokens.Add(token);
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         // Step 8: Build the attendance URL that students will scan
         var clientBaseUrl = _config["ClientBaseUrl"] ?? "http://localhost:7251";
@@ -373,6 +379,22 @@ public class AttendanceController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> GetEnrolledStudents(int courseId)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
+        var ownsCourse = await _context.Courses
+            .AnyAsync(c => c.Id == courseId && c.ProfessorId == professor.Id);
+
+        if (!ownsCourse)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Course not found or access denied." });
+
         var list = await _context.Enrollments
             .Include(e => e.Student)
             .Where(e => e.CourseId == courseId)
@@ -412,6 +434,22 @@ public class AttendanceController : ControllerBase
     [Authorize(Roles = "Professor")]
     public async Task<IActionResult> GetSessionRecords(int id)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
+        var ownsSession = await _context.AttendanceSessions
+            .AnyAsync(s => s.Id == id && s.ProfessorId == professor.Id);
+
+        if (!ownsSession)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Session not found or access denied." });
+
         var records = await _context.AttendanceRecords
             .Include(ar => ar.Student)
             .Where(ar => ar.SessionId == id)
@@ -435,15 +473,25 @@ public class AttendanceController : ControllerBase
 
     // ── POST /api/attendance/sessions/{sessionId:int}/simulate-scan ───────────
     [HttpPost("sessions/{sessionId:int}/simulate-scan")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Professor")]
     public async Task<IActionResult> SimulateScan(int sessionId)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
         var session = await _context.AttendanceSessions
             .Include(s => s.Course)
-            .FirstOrDefaultAsync(s => s.Id == sessionId);
+            .FirstOrDefaultAsync(s => s.Id == sessionId && s.ProfessorId == professor.Id);
 
         if (session is null)
-            return NotFound(new ApiResponse<string> { Success = false, Message = "Session not found." });
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Session not found or access denied." });
 
         var enrolledStudents = await _context.Enrollments
             .Include(e => e.Student)
@@ -512,4 +560,110 @@ public class AttendanceController : ControllerBase
             }
         });
     }
+
+    // ── DELETE /api/attendance/sessions/{id:int} ──────────────────────────────
+    // Professor manually deletes a session and its associated records/token/appeals.
+    [HttpDelete("sessions/{id:int}")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> DeleteSessionRecord(int id)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new ApiResponse<string> { Success = false, Message = "Invalid user identity." });
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
+        var session = await _context.AttendanceSessions
+            .FirstOrDefaultAsync(s => s.Id == id && s.ProfessorId == professor.Id);
+
+        if (session is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Session not found or access denied." });
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var records = await _context.AttendanceRecords.Where(ar => ar.SessionId == id).ToListAsync();
+            _context.AttendanceRecords.RemoveRange(records);
+
+            var tokens = await _context.OnlineAttendanceTokens.Where(t => t.SessionId == id).ToListAsync();
+            _context.OnlineAttendanceTokens.RemoveRange(tokens);
+
+            var appeals = await _context.AttendanceAppeals.Where(a => a.SessionId == id).ToListAsync();
+            _context.AttendanceAppeals.RemoveRange(appeals);
+
+            _context.AttendanceSessions.Remove(session);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new ApiResponse<string> { Success = true, Message = "Session deleted successfully." });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new ApiResponse<string> { Success = false, Message = $"Error deleting session: {ex.Message}" });
+        }
+    }
+
+    // ── PUT /api/attendance/sessions/{id:int}/records ──────────────────────────
+    // Manual override of student attendance list for a session.
+    [HttpPut("sessions/{id:int}/records")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> UpdateSessionRecords(int id, [FromBody] UpdateSessionRecordsRequest request)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new ApiResponse<string> { Success = false, Message = "Invalid user identity." });
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
+        var session = await _context.AttendanceSessions
+            .FirstOrDefaultAsync(s => s.Id == id && s.ProfessorId == professor.Id);
+
+        if (session is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Session not found or access denied." });
+
+        var existingRecords = await _context.AttendanceRecords
+            .Where(ar => ar.SessionId == id)
+            .ToListAsync();
+
+        var existingStudentIds = existingRecords.Select(ar => ar.StudentId).ToHashSet();
+        var targetStudentIds = (request.PresentStudentIds ?? new List<int>()).ToHashSet();
+
+        // Add missing records
+        var toAdd = targetStudentIds.Except(existingStudentIds);
+        foreach (var studentId in toAdd)
+        {
+            _context.AttendanceRecords.Add(new AttendanceRecord
+            {
+                SessionId = id,
+                StudentId = studentId,
+                Confidence = 100f,
+                DeviceId = "manual-override",
+                MarkedAt = DateTime.UtcNow
+            });
+        }
+
+        // Remove records that are not in target list
+        var toRemove = existingRecords.Where(ar => !targetStudentIds.Contains(ar.StudentId));
+        _context.AttendanceRecords.RemoveRange(toRemove);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new ApiResponse<string> { Success = true, Message = "Attendance records updated successfully." });
+    }
+}
+
+public class UpdateSessionRecordsRequest
+{
+    public List<int> PresentStudentIds { get; set; } = new();
 }

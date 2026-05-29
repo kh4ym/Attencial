@@ -46,10 +46,11 @@ public class CourseEnrollmentController : ControllerBase
             .Where(er => er.StudentId == student.Id)
             .ToListAsync();
 
-        var enrolledCourseIds = await _context.Enrollments
+        var enrolledCourseIds = (await _context.Enrollments
             .Where(e => e.StudentId == student.Id)
             .Select(e => e.CourseId)
-            .ToHashSetAsync();
+            .ToListAsync())
+            .ToHashSet();
 
         var dtos = courses.Select(c =>
         {
@@ -290,6 +291,68 @@ public class CourseEnrollmentController : ControllerBase
             }));
 
         return (professor, request, null);
+    }
+
+    // ── DELETE /api/courses/{id:int} ──────────────────────────────────────────
+    // Professor: deletes a course completely, cascading deletes to all associated data.
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> DeleteCourse(int id)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var professor = await _context.Professors
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (professor is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Professor profile not found." });
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == id && c.ProfessorId == professor.Id);
+
+        if (course is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "Course not found or access denied." });
+
+        // Manually delete dependent records to avoid DB constraint failures
+        var sessionIds = await _context.AttendanceSessions
+            .Where(s => s.CourseId == id)
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        if (sessionIds.Any())
+        {
+            var records = _context.AttendanceRecords.Where(r => sessionIds.Contains(r.SessionId));
+            _context.AttendanceRecords.RemoveRange(records);
+
+            var tokens = _context.OnlineAttendanceTokens.Where(t => sessionIds.Contains(t.SessionId));
+            _context.OnlineAttendanceTokens.RemoveRange(tokens);
+
+            var appeals = _context.AttendanceAppeals.Where(a => sessionIds.Contains(a.SessionId));
+            _context.AttendanceAppeals.RemoveRange(appeals);
+
+            var abuseLogs = _context.AbuseLogs.Where(al => al.SessionId != null && sessionIds.Contains(al.SessionId.Value));
+            _context.AbuseLogs.RemoveRange(abuseLogs);
+
+            var sessions = _context.AttendanceSessions.Where(s => s.CourseId == id);
+            _context.AttendanceSessions.RemoveRange(sessions);
+        }
+
+        var enrollments = _context.Enrollments.Where(e => e.CourseId == id);
+        _context.Enrollments.RemoveRange(enrollments);
+
+        var enrollmentRequests = _context.EnrollmentRequests.Where(er => er.CourseId == id);
+        _context.EnrollmentRequests.RemoveRange(enrollmentRequests);
+
+        _context.Courses.Remove(course);
+        await _context.SaveChangesAsync();
+
+        return Ok(new ApiResponse<string>
+        {
+            Success = true,
+            Message = "Course and all associated data deleted successfully."
+        });
     }
 }
 

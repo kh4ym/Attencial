@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Attencial.Client.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,11 +20,18 @@ public class Program
             ? builder.Configuration["ApiBaseUrl"]
             : builder.HostEnvironment.BaseAddress;
 
-        builder.Services.AddScoped(sp => new HttpClient
+        builder.Services.AddTransient<UnauthorizedHttpHandler>();
+        builder.Services.AddScoped(sp =>
         {
-            BaseAddress = new Uri(apiUrl!)
+            var handler = sp.GetRequiredService<UnauthorizedHttpHandler>();
+            handler.InnerHandler = new HttpClientHandler();
+            return new HttpClient(handler)
+            {
+                BaseAddress = new Uri(apiUrl!)
+            };
         });
 
         await builder.Build().RunAsync();
     }
 }
+

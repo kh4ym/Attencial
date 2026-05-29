@@ -32,15 +32,23 @@ namespace Attencial.Client.Pages
 
 		private string activeFilter = "All";
 
+		private string searchQuery = string.Empty;
+
 		private IEnumerable<CourseDto> FilteredCourses
 		{
 			get
 			{
-				if (!(activeFilter == "All"))
+				IEnumerable<CourseDto> list = courses;
+				if (activeFilter != "All")
 				{
-					return courses.Where((CourseDto c) => c.EnrollmentRequestStatus == activeFilter);
+					list = list.Where((CourseDto c) => c.EnrollmentRequestStatus == activeFilter);
 				}
-				return courses;
+				if (!string.IsNullOrWhiteSpace(searchQuery))
+				{
+					var query = searchQuery.Trim().ToLower();
+					list = list.Where((CourseDto c) => c.Name.ToLower().Contains(query) || c.CourseCode.ToLower().Contains(query));
+				}
+				return list;
 			}
 		}
 
@@ -62,20 +70,23 @@ namespace Attencial.Client.Pages
 			});
 			__builder.CloseComponent();
 			__builder.AddMarkupContent(3, "\n\n");
+			if (isLoading)
+			{
+				__builder.AddMarkupContent(21, "<div class=\"canvas-bg flex items-center justify-center\" style=\"min-height: calc(100vh - 4rem);\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-6\"></div>\n                <p class=\"font-label-caps text-label-caps text-on-surface-variant\">Loading available courses...</p></div></div>");
+				return;
+			}
 			__builder.OpenElement(4, "div");
-			__builder.AddAttribute(5, "class", "canvas-bg min-h-screen");
+			__builder.AddAttribute(5, "class", "canvas-bg min-h-screen animate-fade-in");
 			__builder.OpenElement(6, "main");
-			__builder.AddAttribute(7, "class", "pt-8 pb-20 px-margin-desktop max-w-max-width mx-auto relative overflow-hidden min-h-screen");
-			__builder.AddMarkupContent(8, "<div class=\"absolute top-20 right-0 w-64 h-64 bg-primary-container/10 -z-10 rounded-full blur-3xl\"></div>\n        <div class=\"absolute bottom-40 left-0 w-48 h-48 bg-tertiary-container/5 -z-10 transform rotate-45\"></div>\n\n        ");
-			__builder.AddMarkupContent(9, "<section class=\"mb-12\"><div class=\"flex flex-col md:flex-row md:items-end justify-between gap-gutter\"><div class=\"max-w-2xl\"><p class=\"font-label-caps text-label-caps text-primary tracking-widest mb-4\">ACADEMIC CATALOGUE</p>\n                    <h1 class=\"font-headline-lg text-headline-lg text-on-surface mb-2\">Student Course Hub</h1>\n                    <p class=\"font-body-md text-body-md text-on-surface-variant\">Find and request enrollment in available courses. Your professor will review your request.</p></div>\n                <div class=\"hidden xl:block absolute left-6 top-1/4\"><span class=\"vertical-text font-label-caps text-on-surface-variant/30 tracking-widest uppercase\">Intellectual Growth</span></div></div></section>");
+			__builder.AddAttribute(7, "class", "pt-8 pb-20 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto relative overflow-hidden min-h-screen");
+			__builder.AddMarkupContent(8, "");
+			__builder.AddMarkupContent(9, "<section class=\"mb-10 md:mb-12\"><div class=\"flex flex-col md:flex-row md:items-end justify-between gap-gutter\"><div class=\"max-w-2xl\"><p class=\"font-label-caps text-label-caps text-primary tracking-widest mb-4\">ACADEMIC CATALOGUE</p>\n                    <h1 class=\"font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2\">Student Course Hub</h1>\n                    <p class=\"font-body-md text-body-md text-on-surface-variant\">Find and request enrollment in available courses. Your professor will review your request.</p></div></div></section>");
 			if (message != null)
 			{
 				__builder.OpenElement(10, "div");
-				__builder.AddAttribute(11, "class", "flex items-start gap-3 p-4 mb-8 animate-fade-in border");
-				__builder.AddAttribute(12, "style", "border-color: " + (message.StartsWith("✅") ? "#006191" : "#ba1a1a") + "; background: " + (message.StartsWith("✅") ? "rgba(0,97,145,0.04)" : "rgba(186,26,26,0.04)") + ";");
+				__builder.AddAttribute(11, "class", "alert-neo " + (message.StartsWith("✅") ? "alert-neo-success" : "alert-neo-error"));
 				__builder.OpenElement(13, "span");
 				__builder.AddAttribute(14, "class", "material-symbols-outlined text-[20px] shrink-0");
-				__builder.AddAttribute(15, "style", "color: " + (message.StartsWith("✅") ? "#006191" : "#ba1a1a") + ";");
 				__builder.AddContent(16, message.StartsWith("✅") ? "check_circle" : "warning");
 				__builder.CloseElement();
 				__builder.AddMarkupContent(17, "\n                ");
@@ -85,23 +96,34 @@ namespace Attencial.Client.Pages
 				__builder.CloseElement();
 				__builder.CloseElement();
 			}
-			if (isLoading)
+			if (courses.Count == 0)
 			{
-				__builder.AddMarkupContent(21, "<div class=\"text-center py-20\"><span class=\"material-symbols-outlined text-5xl text-primary block mb-6 animate-spin\">refresh</span>\n                <p class=\"font-label-caps text-label-caps text-on-surface-variant\">Loading available courses...</p></div>");
-			}
-			else if (courses.Count == 0)
-			{
-				__builder.AddMarkupContent(22, "<div class=\"border border-on-surface bg-surface text-center p-12 animate-fade-in\"><span class=\"material-symbols-outlined text-5xl text-primary block mb-4\">assignment_late</span>\n                <h4 class=\"font-headline-md text-headline-md text-on-surface mb-2\">No Courses Available</h4>\n                <p class=\"font-body-md text-body-md text-on-surface-variant\">No courses have been created yet. Check back later.</p></div>");
+				__builder.AddMarkupContent(22, "<div class=\"border border-on-surface bg-surface text-center p-6 md:p-12 animate-fade-in\"><span class=\"material-symbols-outlined text-5xl text-primary block mb-4\">assignment_late</span>\n                <h4 class=\"font-headline-md text-headline-md text-on-surface mb-2\">No Courses Available</h4>\n                <p class=\"font-body-md text-body-md text-on-surface-variant\">No courses have been created yet. Check back later.</p></div>");
 			}
 			else
 			{
+				__builder.OpenElement(500, "div");
+				__builder.AddAttribute(501, "class", "flex items-center border border-on-surface max-w-md mb-6 bg-surface px-3 py-1");
+				__builder.OpenElement(502, "input");
+				__builder.AddAttribute(503, "type", "text");
+				__builder.AddAttribute(504, "class", "flex-grow bg-transparent border-0 focus:outline-none focus:ring-0 py-2 text-on-surface placeholder:text-on-surface-variant/50 font-body-md");
+				__builder.AddAttribute(505, "placeholder", "Search courses by name or code...");
+				__builder.AddAttribute(506, "value", BindConverter.FormatValue(searchQuery));
+				__builder.AddAttribute(507, "oninput", EventCallback.Factory.CreateBinder(this, delegate(string? __value)
+				{
+					searchQuery = __value ?? string.Empty;
+				}, searchQuery));
+				__builder.CloseElement();
+				__builder.AddMarkupContent(508, "<span class=\"material-symbols-outlined text-on-surface-variant/50 pointer-events-none ml-2 select-none\">search</span>");
+				__builder.CloseElement();
+
 				__builder.OpenElement(23, "div");
-				__builder.AddAttribute(24, "class", "flex gap-3 flex-wrap mb-8");
+				__builder.AddAttribute(24, "class", "flex filter-tabs-mobile md:flex-wrap mb-8");
 				string[] array = new string[5] { "All", "None", "Pending", "Approved", "Rejected" };
 				foreach (string f in array)
 				{
 					__builder.OpenElement(25, "button");
-					__builder.AddAttribute(26, "class", (activeFilter == f) ? "btn-neo-primary" : "btn-neo-outline");
+					__builder.AddAttribute(26, "class", ((activeFilter == f) ? "btn-neo-primary" : "btn-neo-outline") + " flex-shrink-0");
 					__builder.AddAttribute(27, "style", "padding: 0.5rem 1rem;");
 					__builder.AddAttribute(28, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Action)delegate
 					{
@@ -143,14 +165,14 @@ namespace Attencial.Client.Pages
 					__builder.OpenElement(41, "div");
 					__builder.AddAttribute(42, "class", "animate-fade-in");
 					__builder.OpenElement(43, "div");
-					__builder.AddAttribute(44, "class", "card-neo-hover h-full flex flex-col justify-between relative overflow-hidden");
+					__builder.AddAttribute(44, "class", "card-neo-hover h-full flex flex-col justify-between relative overflow-visible");
 					__builder.OpenElement(45, "div");
 					__builder.AddAttribute(46, "class", "mb-6");
 					__builder.OpenElement(47, "div");
 					__builder.AddAttribute(48, "class", "flex justify-between items-start flex-wrap gap-2 mb-3");
 					__builder.OpenElement(49, "div");
 					__builder.OpenElement(50, "h3");
-					__builder.AddAttribute(51, "class", "font-headline-md text-[22px] text-on-surface mb-1");
+					__builder.AddAttribute(51, "class", "font-headline-md text-[22px] text-on-surface mb-1 break-words");
 					__builder.AddContent(52, course.Name);
 					__builder.CloseElement();
 					__builder.AddMarkupContent(53, "\n                                        ");
@@ -164,7 +186,7 @@ namespace Attencial.Client.Pages
 					__builder.CloseElement();
 					__builder.AddMarkupContent(59, "\n\n                                ");
 					__builder.OpenElement(60, "div");
-					__builder.AddAttribute(61, "class", "flex items-center gap-2 mt-3 font-body-md text-[14px] text-on-surface-variant");
+					__builder.AddAttribute(61, "class", "flex flex-wrap items-center gap-2 mt-3 font-body-md text-[14px] text-on-surface-variant");
 					__builder.AddMarkupContent(62, "<span class=\"material-symbols-outlined text-[16px] text-primary shrink-0\">person</span>\n                                    ");
 					__builder.OpenElement(63, "span");
 					__builder.AddContent(64, course.ProfessorName);
@@ -211,7 +233,7 @@ namespace Attencial.Client.Pages
 						__builder.AddAttribute(87, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => RequestEnrollment(course.Id, course.Name)));
 						if (submittingCourseId == course.Id)
 						{
-							__builder.AddMarkupContent(88, "<span class=\"material-symbols-outlined text-[18px] animate-spin\">refresh</span>\n                                            ");
+							__builder.AddMarkupContent(88, "<span class=\"spinner-ring-sm mr-2\"></span>\n                                            ");
 							__builder.AddMarkupContent(89, "<span>Submitting...</span>");
 						}
 						else if (course.EnrollmentRequestStatus == "Rejected")
@@ -283,7 +305,18 @@ namespace Attencial.Client.Pages
 					courses = (await res.Content.ReadFromJsonAsync<ApiResponse<List<CourseDto>>>())?.Data ?? new List<CourseDto>();
 					return;
 				}
-				message = "❌ " + ((await res.Content.ReadFromJsonAsync<ApiResponse<string>>())?.Message ?? $"Failed to load courses ({res.StatusCode}).");
+				try
+				{
+					var errBody = await res.Content.ReadAsStringAsync();
+					var errJson = !string.IsNullOrWhiteSpace(errBody) && errBody.TrimStart().StartsWith("{")
+						? JsonSerializer.Deserialize<ApiResponse<string>>(errBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+						: null;
+					message = "❌ " + (errJson?.Message ?? $"Failed to load courses ({res.StatusCode}).");
+				}
+				catch
+				{
+					message = $"❌ Failed to load courses ({res.StatusCode}).";
+				}
 			}
 			catch (Exception ex)
 			{
@@ -339,15 +372,15 @@ namespace Attencial.Client.Pages
 			{
 				"Approved" => delegate(RenderTreeBuilder __builder2)
 				{
-					__builder2.AddMarkupContent(94, "<span class=\"badge-glass-success d-inline-flex align-items-center gap-1 px-2 py-1\" style=\"font-size: 10px;\"><i class=\"bi bi-check-circle-fill\"></i>Enrolled\n                      </span>");
+					__builder2.AddMarkupContent(94, "<span class=\"badge-neo status-good\"><span class=\"material-symbols-outlined text-[14px] mr-1\">check_circle</span>Enrolled</span>");
 				}, 
 				"Pending" => delegate(RenderTreeBuilder __builder2)
 				{
-					__builder2.AddMarkupContent(95, "<span class=\"badge-glass-warning d-inline-flex align-items-center gap-1 px-2 py-1\" style=\"font-size: 10px;\"><i class=\"bi bi-hourglass-split\"></i>Pending\n                      </span>");
+					__builder2.AddMarkupContent(95, "<span class=\"badge-neo status-warning\"><span class=\"material-symbols-outlined text-[14px] mr-1\">hourglass</span>Pending</span>");
 				}, 
 				"Rejected" => delegate(RenderTreeBuilder __builder2)
 				{
-					__builder2.AddMarkupContent(96, "<span class=\"badge-glass-error d-inline-flex align-items-center gap-1 px-2 py-1\" style=\"font-size: 10px;\"><i class=\"bi bi-x-circle-fill\"></i>Rejected\n                      </span>");
+					__builder2.AddMarkupContent(96, "<span class=\"badge-neo status-danger\"><span class=\"material-symbols-outlined text-[14px] mr-1\">cancel</span>Rejected</span>");
 				}, 
 				_ => delegate(RenderTreeBuilder __builder2)
 				{

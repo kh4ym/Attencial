@@ -130,7 +130,7 @@ namespace Attencial.Client.Pages
 			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-20 md:pt-28 pb-24 md:pb-4 relative z-10 flex-1 min-h-0 flex flex-col");
 			if (!isAuthorized)
 			{
-				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-4xl mb-4 block\">progress_activity</span>\n                    <p class=\"font-label-caps text-on-surface-variant\">Checking authorization...</p></div></div>");
+				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n                    <p class=\"font-label-caps text-on-surface-variant\">Checking authorization...</p></div></div>");
 			}
 			else if (isProfileMissing)
 			{
@@ -350,7 +350,7 @@ namespace Attencial.Client.Pages
 				__builder.AddAttribute(132, "disabled", isStarting || selectedCourseId == 0);
 				if (isStarting)
 				{
-					__builder.AddMarkupContent(133, "<span class=\"material-symbols-outlined animate-spin text-sm\">sync</span>");
+					__builder.AddMarkupContent(133, "<span class=\"spinner-ring-sm mr-2\"></span>");
 				}
 				__builder.AddMarkupContent(134, "                        Launch Session\n                    ");
 				__builder.CloseElement();
@@ -415,7 +415,7 @@ namespace Attencial.Client.Pages
 					__builder.AddAttribute(170, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
 					__builder.OpenElement(171, "div");
 					__builder.AddAttribute(172, "class", "flex-[2] flex flex-col items-center justify-center border border-on-surface bg-surface p-5 gap-4 min-h-0");
-					__builder.AddMarkupContent(173, "<div class=\"p-4 border-4 border-on-surface bg-white mx-auto\" style=\"box-shadow: 10px 10px 0px #1b1c1a;\"><div id=\"qrContainer\" style=\"width:160px;height:160px;\"></div></div>\n                                ");
+					__builder.AddMarkupContent(173, "<div class=\"qr-frame mx-auto\"><div id=\"qrContainer\" class=\"qr-container\"></div></div>\n                                ");
 					__builder.OpenElement(174, "div");
 					__builder.AddAttribute(175, "class", "flex gap-10");
 					__builder.OpenElement(176, "span");

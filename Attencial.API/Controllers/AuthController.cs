@@ -50,10 +50,15 @@ public class AuthController : ControllerBase
             throw new ValidationException(validationResult.Errors);
         }
 
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var normalizedRole = request.Role.Equals(AppConstants.Roles.Professor, StringComparison.OrdinalIgnoreCase)
+            ? AppConstants.Roles.Professor
+            : AppConstants.Roles.Student;
+
         // Check if email already exists
         var existingUser = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
         if (existingUser is not null)
         {
@@ -69,27 +74,39 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
-            Email = request.Email,
+            Email = normalizedEmail,
             PasswordHash = passwordHash,
-            Role = request.Role
+            Role = normalizedRole
         };
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // If registering as a Student, also create the Student profile
-        if (request.Role.Equals(AppConstants.Roles.Student, StringComparison.OrdinalIgnoreCase))
-        {
-            var student = new Student
-            {
-                UserId = user.Id,
-                FullName = request.FullName,
-                RollNumber = request.RollNumber,
-                EnrollmentStatus = "Pending"
-            };
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-        }
+	    // Create the matching profile in the same transaction so auth/profile state cannot split.
+	    if (normalizedRole == AppConstants.Roles.Student)
+	    {
+	        _context.Students.Add(new Student
+	        {
+	            UserId = user.Id,
+	            FullName = request.FullName.Trim(),
+	            RollNumber = request.RollNumber.Trim(),
+	            EnrollmentStatus = "Pending"
+	        });
+	    }
+	    else if (normalizedRole == AppConstants.Roles.Professor)
+	    {
+	        _context.Professors.Add(new Professor
+	        {
+	            UserId = user.Id,
+	            FullName = string.IsNullOrWhiteSpace(request.FullName) ? normalizedEmail : request.FullName.Trim(),
+	            Department = string.Empty
+	        });
+	    }
+
+	    await _context.SaveChangesAsync();
+	    await transaction.CommitAsync();
 
         return Ok(new ApiResponse<string>
         {
@@ -126,7 +143,7 @@ public class AuthController : ControllerBase
         // Find user by email
         var user = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
         // Verify password against stored hash
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))

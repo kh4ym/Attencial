@@ -74,13 +74,15 @@ window.supabaseRealtime = {
             var delay = Math.floor(Math.random() * 8000) + 7000; // 7-15s
             self.simTimer = setTimeout(async function() {
                 if (self.dotNetHelper) {
-                    try {
-                        var response = await fetch('/api/attendance/sessions/' + sessionId + '/simulate-scan', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
+	                    try {
+	                        var token = window.authStorage ? window.authStorage.getToken() : null;
+	                        var response = await fetch('/api/attendance/sessions/' + sessionId + '/simulate-scan', {
+	                            method: 'POST',
+	                            headers: {
+	                                'Content-Type': 'application/json',
+	                                ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+	                            }
+	                        });
                         var result = await response.json();
                         if (result.success && result.data) {
                             console.log("Simulated Scan Event:", result.data);

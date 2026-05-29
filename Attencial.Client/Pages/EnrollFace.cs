@@ -75,7 +75,7 @@ namespace Attencial.Client.Pages
 			__builder.CloseElement();
 			if (isLoading)
 			{
-				__builder.AddMarkupContent(17, "<div class=\"flex-1 flex items-center justify-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-3xl\">refresh</span></div>");
+				__builder.AddMarkupContent(17, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"spinner-ring-lg\"></div></div>");
 			}
 			else
 			{
@@ -186,7 +186,7 @@ namespace Attencial.Client.Pages
 					FaceCaptureComponent? faceCaptureComponent = faceCapture;
 					if (faceCaptureComponent != null && faceCaptureComponent.IsSubmitting)
 					{
-						__builder.AddMarkupContent(84, "<span class=\"material-symbols-outlined animate-spin\">sync</span>\n                                    ");
+						__builder.AddMarkupContent(84, "<span class=\"spinner-ring-sm mr-2\"></span>\n                                    ");
 						__builder.AddMarkupContent(85, "<span>Enrolling...</span>");
 					}
 					else

@@ -26,9 +26,13 @@ namespace Attencial.Client.Pages
 
 		private bool cameraStarted;
 
+		private bool isCameraStarting;
+
 		private bool isSubmitting;
 
 		private bool isSuccess;
+
+		private bool messageIsError;
 
 		private string? message;
 
@@ -55,12 +59,12 @@ namespace Attencial.Client.Pages
 			__builder.CloseComponent();
 			__builder.AddMarkupContent(3, "\n\n");
 			__builder.OpenElement(4, "div");
-			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col");
+			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col overflow-y-auto");
 			__builder.OpenElement(6, "main");
-			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-4 relative z-10 flex-1 min-h-0 flex flex-col");
+			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-4 relative z-10 flex-1 min-h-0 flex flex-col animate-fade-in");
 			if (isValidating)
 			{
-				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><span class=\"material-symbols-outlined animate-spin text-primary text-4xl mb-4 block\">progress_activity</span>\n                    <p class=\"font-label-caps text-on-surface-variant\">Verifying link...</p></div></div>");
+				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n                    <p class=\"font-label-caps text-on-surface-variant\">Verifying link...</p></div></div>");
 			}
 			else if (!string.IsNullOrEmpty(tokenError))
 			{
@@ -102,44 +106,54 @@ namespace Attencial.Client.Pages
 				__builder.AddAttribute(32, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
 				__builder.OpenElement(33, "div");
 				__builder.AddAttribute(34, "class", "flex-[2] flex flex-col min-h-0");
-				__builder.AddMarkupContent(35, "<div class=\"flex items-center gap-3 mb-2 flex-shrink-0\"><h1 class=\"font-headline-md text-headline-md\">Mark Attendance</h1>\n                        <div class=\"flex gap-2\"><div class=\"w-3 h-3 bg-primary\"></div>\n                            <div class=\"w-3 h-3 bg-tertiary\"></div></div></div>");
+				__builder.AddMarkupContent(35, "<div class=\"flex flex-col gap-3 mb-5 flex-shrink-0\"><div class=\"flex items-center gap-3\"><h1 class=\"font-headline-md text-headline-md\">Mark Attendance</h1>\n                        <div class=\"flex gap-2\"><div class=\"w-3 h-3 bg-primary\"></div>\n                            <div class=\"w-3 h-3 bg-tertiary\"></div></div></div><p class=\"font-body-md text-sm text-on-surface-variant max-w-2xl\">Open the camera when you are ready. The capture button appears only after the feed is live.</p></div>");
 				if (!string.IsNullOrEmpty(message))
 				{
 					__builder.OpenElement(36, "div");
-					__builder.AddAttribute(37, "class", "border-l-4 " + (message.StartsWith("❌") ? "border-primary" : "border-tertiary") + " bg-surface-container-low p-2 mb-2 flex items-start gap-2 flex-shrink-0");
+					__builder.AddAttribute(37, "class", "border-l-4 " + (messageIsError ? "border-primary" : "border-tertiary") + " bg-surface-container-low p-3 mb-3 flex items-start gap-2 flex-shrink-0");
 					__builder.OpenElement(38, "span");
-					__builder.AddAttribute(39, "class", "material-symbols-outlined " + (message.StartsWith("❌") ? "text-primary" : "text-tertiary") + " text-sm mt-0.5");
-					__builder.AddContent(40, message.StartsWith("❌") ? "warning" : "info");
+					__builder.AddAttribute(39, "class", "material-symbols-outlined " + (messageIsError ? "text-primary" : "text-tertiary") + " text-sm mt-0.5");
+					__builder.AddContent(40, messageIsError ? "warning" : "info");
 					__builder.CloseElement();
 					__builder.AddMarkupContent(41, "\n                            ");
 					__builder.OpenElement(42, "span");
 					__builder.AddAttribute(43, "class", "text-xs text-on-surface");
-					__builder.AddContent(44, message.Replace("❌ ", ""));
+					__builder.AddContent(44, message);
 					__builder.CloseElement();
 					__builder.CloseElement();
 				}
 				__builder.OpenElement(45, "div");
-				__builder.AddAttribute(46, "class", "relative flex-1 bg-on-surface overflow-hidden rounded-2xl min-h-0");
-				__builder.OpenElement(47, "video");
-				__builder.AddAttribute(48, "id", "camera");
-				__builder.AddAttribute(49, "autoplay");
-				__builder.AddAttribute(50, "playsinline");
-				__builder.AddAttribute(51, "class", cameraStarted ? "absolute inset-0 w-full h-full" : "hidden");
-				__builder.AddAttribute(52, "style", "object-fit: cover; transform: scaleX(-1);");
-				__builder.CloseElement();
-				__builder.AddMarkupContent(53, "\n                        ");
-				__builder.OpenElement(54, "div");
-				__builder.AddAttribute(55, "class", "absolute inset-0 flex items-center justify-center pointer-events-none z-10");
-				__builder.OpenElement(56, "svg");
-				__builder.AddAttribute(57, "viewBox", "0 0 100 100");
-				__builder.AddAttribute(58, "style", "width: 160px; height: 200px; color: rgba(255,255,255,0.12);");
-				__builder.AddAttribute(59, "class", (cameraStarted && !isSubmitting) ? "" : "hidden");
-				__builder.AddMarkupContent(60, "<path d=\"M 50 15 C 32 15, 30 50, 32 70 C 35 85, 45 92, 50 92 C 55 92, 65 85, 68 70 C 70 50, 68 15, 50 15 Z\" fill=\"none\" stroke=\"currentColor\" stroke-dasharray=\"3,3\" stroke-width=\"1\"></path>");
-				__builder.CloseElement();
-				__builder.CloseElement();
-				if (!cameraStarted)
+				__builder.AddAttribute(46, "class", "relative flex-1 bg-surface overflow-hidden rounded-2xl min-h-[420px] border border-on-surface-variant/20 shadow-[8px_8px_0px_rgba(27,28,26,0.08)]");
+				if (cameraStarted || isCameraStarting)
 				{
-					__builder.AddMarkupContent(61, "<div class=\"absolute inset-0 flex items-center justify-center opacity-20\"><span class=\"material-symbols-outlined text-background text-9xl\">videocam</span></div>");
+					__builder.OpenElement(47, "video");
+					__builder.AddAttribute(48, "id", "camera");
+					__builder.AddAttribute(49, "autoplay");
+					__builder.AddAttribute(50, "playsinline");
+					__builder.AddAttribute(51, "class", "absolute inset-0 w-full h-full");
+					__builder.AddAttribute(52, "style", "object-fit: cover; transform: scaleX(-1);");
+					__builder.CloseElement();
+					__builder.AddMarkupContent(53, "\n                        ");
+					if (isCameraStarting)
+					{
+						__builder.AddMarkupContent(54, "<div class=\"absolute inset-0 z-10 flex items-center justify-center bg-surface/80 backdrop-blur-sm\"><div class=\"text-center px-6\"><div class=\"spinner-ring-lg mb-4\"></div><p class=\"font-label-caps text-label-caps text-on-surface-variant\">Opening camera...</p><p class=\"font-body-md text-sm text-on-surface-variant mt-2\">Grant permission, then frame your face.</p></div></div>");
+					}
+					else
+					{
+						__builder.OpenElement(54, "div");
+						__builder.AddAttribute(55, "class", "absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-gradient-to-b from-transparent via-transparent to-black/10");
+						__builder.OpenElement(56, "svg");
+						__builder.AddAttribute(57, "viewBox", "0 0 100 100");
+						__builder.AddAttribute(58, "style", "width: 160px; height: 200px; color: rgba(255,255,255,0.12);");
+						__builder.AddAttribute(59, "class", isSubmitting ? "hidden" : "");
+						__builder.AddMarkupContent(60, "<path d=\"M 50 15 C 32 15, 30 50, 32 70 C 35 85, 45 92, 50 92 C 55 92, 65 85, 68 70 C 70 50, 68 15, 50 15 Z\" fill=\"none\" stroke=\"currentColor\" stroke-dasharray=\"3,3\" stroke-width=\"1\"></path>");
+						__builder.CloseElement();
+						__builder.CloseElement();
+					}
+				}
+				else
+				{
+					__builder.AddMarkupContent(61, "<div class=\"absolute inset-0 flex items-center justify-center px-6 text-center bg-surface-container-low\"><div class=\"max-w-md\"><div class=\"mx-auto mb-4 w-16 h-16 rounded-full border border-outline-variant bg-background flex items-center justify-center\"><span class=\"material-symbols-outlined text-3xl text-primary\">videocam</span></div><p class=\"font-label-caps text-xs tracking-[0.2em] text-on-surface-variant mb-2\">Camera disabled</p><h2 class=\"font-headline-md text-headline-md text-on-surface mb-2\">Open camera to begin</h2><p class=\"font-body-md text-sm text-on-surface-variant\">We will only request camera access after you press the button below.</p></div></div>");
 				}
 				__builder.CloseElement();
 				__builder.AddMarkupContent(62, "\n\n                    ");
@@ -149,8 +163,16 @@ namespace Attencial.Client.Pages
 				{
 					__builder.OpenElement(65, "button");
 					__builder.AddAttribute(66, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)StartCamera));
-					__builder.AddAttribute(67, "class", "w-full bg-on-surface text-background font-label-caps py-4 rounded-full hover:bg-primary transition-colors flex items-center justify-center gap-2 text-sm");
-					__builder.AddMarkupContent(68, "<span class=\"material-symbols-outlined\">face</span>\n                                Scan Face\n                            ");
+					__builder.AddAttribute(67, "disabled", isCameraStarting);
+					__builder.AddAttribute(68, "class", "w-full bg-on-surface text-background font-label-caps py-4 rounded-full hover:bg-primary transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed");
+					if (isCameraStarting)
+					{
+						__builder.AddMarkupContent(69, "<span class=\"spinner-ring-sm mr-2\"></span>\n                                Opening Camera...\n                            ");
+					}
+					else
+					{
+						__builder.AddMarkupContent(69, "<span class=\"material-symbols-outlined\">videocam</span>\n                                Open Camera\n                            ");
+					}
 					__builder.CloseElement();
 				}
 				else
@@ -158,10 +180,10 @@ namespace Attencial.Client.Pages
 					__builder.OpenElement(69, "button");
 					__builder.AddAttribute(70, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)MarkAttendance));
 					__builder.AddAttribute(71, "disabled", isSubmitting);
-					__builder.AddAttribute(72, "class", "w-full bg-primary text-on-primary font-label-caps py-4 rounded-full hover:bg-[#f05454] transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50");
+					__builder.AddAttribute(72, "class", "w-full bg-primary text-on-primary font-label-caps py-4 rounded-full hover:bg-[#f05454] transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 shadow-[8px_8px_0px_rgba(176,37,43,0.12)]");
 					if (isSubmitting)
 					{
-						__builder.AddMarkupContent(73, "<span class=\"material-symbols-outlined animate-spin\">progress_activity</span>\n                                    ");
+						__builder.AddMarkupContent(73, "<span class=\"spinner-ring-sm mr-2\"></span>\n                                    ");
 						__builder.AddMarkupContent(74, "<span>Verifying...</span>");
 					}
 					else
@@ -280,6 +302,10 @@ namespace Attencial.Client.Pages
 		private async Task StartCamera()
 		{
 			message = null;
+			messageIsError = false;
+			isCameraStarting = true;
+			StateHasChanged();
+			await Task.Yield();
 			try
 			{
 				await JS.InvokeVoidAsync("cameraInterop.startCamera", "camera");
@@ -287,7 +313,14 @@ namespace Attencial.Client.Pages
 			}
 			catch (Exception ex)
 			{
-				message = "❌ Camera error: " + ex.Message;
+				cameraStarted = false;
+				messageIsError = true;
+				message = "Camera error: " + ex.Message;
+			}
+			finally
+			{
+				isCameraStarting = false;
+				StateHasChanged();
 			}
 		}
 
@@ -299,6 +332,7 @@ namespace Attencial.Client.Pages
 			}
 			isSubmitting = true;
 			message = "Capturing...";
+			messageIsError = false;
 			StateHasChanged();
 			try
 			{
@@ -324,12 +358,14 @@ namespace Attencial.Client.Pages
 				}
 				else
 				{
-					message = "❌ " + (apiResponse?.Message ?? "Verification failed.");
+					messageIsError = true;
+					message = apiResponse?.Message ?? "Verification failed.";
 				}
 			}
 			catch (Exception ex)
 			{
-				message = "❌ " + ex.Message;
+				messageIsError = true;
+				message = ex.Message;
 			}
 			finally
 			{
@@ -350,7 +386,7 @@ namespace Attencial.Client.Pages
 
 		public async ValueTask DisposeAsync()
 		{
-			if (cameraStarted)
+			if (cameraStarted || isCameraStarting)
 			{
 				try
 				{

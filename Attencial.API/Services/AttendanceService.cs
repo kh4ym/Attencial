@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -12,6 +14,8 @@ namespace Attencial.API.Services;
 
 public class AttendanceService : IAttendanceService
 {
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> CacheKeyLocks = new();
+
     private readonly AppDbContext _context;
     private readonly IFaceService _faceService;
     private readonly IDistributedCache _cache;
@@ -94,15 +98,15 @@ public class AttendanceService : IAttendanceService
             };
         }
 
-        // ── Layer 2: Rate Limiting (2 detection attempts per deviceId per token) ──
+        // ── Layer 2: Rate Limiting (5 detection attempts per deviceId per token) ──
         var cacheKey = $"ratelimit:mark:{request.Token}:{request.DeviceId}";
-        var markAttempts = await IncrementCacheKeyAsync(cacheKey, TimeSpan.FromMinutes(15));
-        if (markAttempts > 2)
+        var markAttempts = await IncrementCacheKeyAsync(cacheKey, TimeSpan.FromMinutes(5));
+        if (markAttempts > 5)
         {
             return new ApiResponse<AttendanceMarkResponse>
             {
                 Success = false,
-                Message = "Too many marking attempts from this device. Rate limit exceeded (Max 2/15m)."
+                Message = "Too many marking attempts from this device. Rate limit exceeded (Max 5/5m)."
             };
         }
 
@@ -205,7 +209,18 @@ public class AttendanceService : IAttendanceService
         };
 
         _context.AttendanceRecords.Add(record);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return new ApiResponse<AttendanceMarkResponse>
+            {
+                Success = false,
+                Message = "Your attendance has already been successfully marked for this session."
+            };
+        }
 
         return new ApiResponse<AttendanceMarkResponse>
         {
@@ -226,17 +241,26 @@ public class AttendanceService : IAttendanceService
     // ── Distributed Cache Helper ────────────────────────────────────────────────
     private async Task<int> IncrementCacheKeyAsync(string key, TimeSpan expiry)
     {
-        var valStr = await _cache.GetStringAsync(key);
-        int val = 0;
-        if (valStr != null && int.TryParse(valStr, out var parsed))
+        var keyLock = CacheKeyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        await keyLock.WaitAsync();
+        try
         {
-            val = parsed;
+            var valStr = await _cache.GetStringAsync(key);
+            int val = 0;
+            if (valStr != null && int.TryParse(valStr, out var parsed))
+            {
+                val = parsed;
+            }
+            val++;
+            await _cache.SetStringAsync(key, val.ToString(), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiry
+            });
+            return val;
         }
-        val++;
-        await _cache.SetStringAsync(key, val.ToString(), new DistributedCacheEntryOptions
+        finally
         {
-            AbsoluteExpirationRelativeToNow = expiry
-        });
-        return val;
+            keyLock.Release();
+        }
     }
 }

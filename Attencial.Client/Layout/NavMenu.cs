@@ -106,12 +106,13 @@ namespace Attencial.Client.Layout
 			__builder.AddAttribute(61, "b-c8fp1rjic8");
 			if (isLoggedIn)
 			{
-				__builder.AddMarkupContent(62, "<a href=\"profile\" class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" b-c8fp1rjic8 title=\"Profile\">person</a>\n                ");
+				__builder.AddMarkupContent(62, "<a href=\"profile\" class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" b-c8fp1rjic8 title=\"Profile\" aria-label=\"Profile\">person</a>\n                ");
 				__builder.OpenElement(63, "button");
 				__builder.AddAttribute(64, "onclick", EventCallback.Factory.Create<MouseEventArgs>((object)this, (Func<Task>)Logout));
 				__builder.AddAttribute(65, "class", "material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer");
 				__builder.AddAttribute(66, "b-c8fp1rjic8");
 				__builder.AddAttribute(67, "title", "Logout");
+				__builder.AddAttribute(69, "aria-label", "Logout");
 				__builder.AddContent(68, "logout");
 				__builder.CloseElement();
 			}
@@ -187,17 +188,6 @@ namespace Attencial.Client.Layout
 					__builder.AddAttribute(94, "class", "mobile-nav-item " + (GetActive("courses") ? "active" : ""));
 					__builder.AddAttribute(95, "b-c8fp1rjic8");
 					__builder.AddMarkupContent(96, "<span class=\"material-symbols-outlined nav-icon\">school</span>\n                    <span class=\"nav-label\">Courses</span>");
-					__builder.CloseElement();
-				}
-
-				// Profile (students only)
-				if (userRole != "Professor")
-				{
-					__builder.OpenElement(101, "a");
-					__builder.AddAttribute(102, "href", "profile");
-					__builder.AddAttribute(103, "class", "mobile-nav-item " + (GetActive("profile") ? "active" : ""));
-					__builder.AddAttribute(104, "b-c8fp1rjic8");
-					__builder.AddMarkupContent(105, "<span class=\"material-symbols-outlined nav-icon\">person</span>\n                    <span class=\"nav-label\">Profile</span>");
 					__builder.CloseElement();
 				}
 
