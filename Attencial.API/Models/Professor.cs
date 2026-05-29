@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Attencial.API.Models;
 
 public class Professor
@@ -10,5 +13,5 @@ public class Professor
 
     public User User { get; set; } = null!;
     public List<Course> Courses { get; set; } = new();
-    public List<FacultyAttendanceRecord> FacultyAttendanceRecords { get; set; } = new();
+    public List<FaceVector> FaceVectors { get; set; } = new();
 }

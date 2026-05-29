@@ -3,6 +3,10 @@ using Attencial.API.Models;
 
 namespace Attencial.API.Data;
 
+/// <summary>
+/// Primary database context for the Attencial application.
+/// Manages users, students, professors, courses, attendance, enrollment, and face vectors.
+/// </summary>
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
@@ -20,9 +24,8 @@ public class AppDbContext : DbContext
     public DbSet<OnlineAttendanceToken> OnlineAttendanceTokens { get; set; }
     public DbSet<AttendanceRecord> AttendanceRecords { get; set; }
     public DbSet<AbuseLog> AbuseLogs { get; set; }
-    public DbSet<FacultyAttendanceRecord> FacultyAttendanceRecords { get; set; }
-    public DbSet<LeaveRequest> LeaveRequests { get; set; }
-    public DbSet<FacultyAbuseLog> FacultyAbuseLogs { get; set; }
+    public DbSet<EnrollmentRequest> EnrollmentRequests { get; set; }
+    public DbSet<AttendanceAppeal> AttendanceAppeals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,9 +36,19 @@ public class AppDbContext : DbContext
             .HasIndex(ar => new { ar.SessionId, ar.StudentId })
             .IsUnique();
 
+        // One appeal per student per session
+        modelBuilder.Entity<AttendanceAppeal>()
+            .HasIndex(a => new { a.SessionId, a.StudentId })
+            .IsUnique();
+
         // One enrollment per student per course
         modelBuilder.Entity<Enrollment>()
             .HasIndex(e => new { e.StudentId, e.CourseId })
+            .IsUnique();
+
+        // One enrollment *request* per student per course at a time
+        modelBuilder.Entity<EnrollmentRequest>()
+            .HasIndex(er => new { er.StudentId, er.CourseId })
             .IsUnique();
 
         // Token string must be unique

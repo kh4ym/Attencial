@@ -47,7 +47,7 @@ namespace Attencial.API.Migrations
                     b.Property<string>("IpAddress")
                         .HasColumnType("text");
 
-                    b.Property<int>("SessionId")
+                    b.Property<int?>("SessionId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("StudentId")
@@ -60,6 +60,45 @@ namespace Attencial.API.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("AbuseLogs");
+                });
+
+            modelBuilder.Entity("Attencial.API.Models.AttendanceAppeal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CourseName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SessionId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("AttendanceAppeals");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.AttendanceRecord", b =>
@@ -185,7 +224,7 @@ namespace Attencial.API.Migrations
                     b.ToTable("Enrollments");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
+            modelBuilder.Entity("Attencial.API.Models.EnrollmentRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -193,18 +232,19 @@ namespace Attencial.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AzureFaceId")
-                        .IsRequired()
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
                         .HasColumnType("text");
 
-                    b.Property<string>("AzurePersonId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("RequestedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -213,117 +253,50 @@ namespace Attencial.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("StudentId", "CourseId")
+                        .IsUnique();
+
+                    b.ToTable("EnrollmentRequests");
+                });
+
+            modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ProfessorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RekognitionExternalId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RekognitionFaceId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessorId");
+
                     b.HasIndex("StudentId");
 
                     b.ToTable("FaceVectors");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.FacultyAbuseLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AbuseType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("FacultyAbuseLogs");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.FacultyAttendanceRecord", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CheckInTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double?>("HoursWorked")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("FacultyAttendanceRecords");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.LeaveRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AdminNote")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AttachmentUrl")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProfessorId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.ToTable("LeaveRequests");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.OnlineAttendanceToken", b =>
@@ -402,9 +375,6 @@ namespace Attencial.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AzurePersonId")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -414,6 +384,9 @@ namespace Attencial.API.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RekognitionExternalId")
                         .HasColumnType("text");
 
                     b.Property<string>("RollNumber")
@@ -466,15 +439,24 @@ namespace Attencial.API.Migrations
                 {
                     b.HasOne("Attencial.API.Models.AttendanceSession", "Session")
                         .WithMany()
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SessionId");
 
                     b.HasOne("Attencial.API.Models.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId");
 
                     b.Navigation("Session");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Attencial.API.Models.AttendanceAppeal", b =>
+                {
+                    b.HasOne("Attencial.API.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Student");
                 });
@@ -539,48 +521,38 @@ namespace Attencial.API.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
+            modelBuilder.Entity("Attencial.API.Models.EnrollmentRequest", b =>
                 {
+                    b.HasOne("Attencial.API.Models.Course", "Course")
+                        .WithMany("EnrollmentRequests")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Attencial.API.Models.Student", "Student")
-                        .WithMany("FaceVectors")
+                        .WithMany("EnrollmentRequests")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Course");
+
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Attencial.API.Models.FacultyAbuseLog", b =>
+            modelBuilder.Entity("Attencial.API.Models.FaceVector", b =>
                 {
                     b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany()
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("FaceVectors")
+                        .HasForeignKey("ProfessorId");
+
+                    b.HasOne("Attencial.API.Models.Student", "Student")
+                        .WithMany("FaceVectors")
+                        .HasForeignKey("StudentId");
 
                     b.Navigation("Professor");
-                });
 
-            modelBuilder.Entity("Attencial.API.Models.FacultyAttendanceRecord", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany("FacultyAttendanceRecords")
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professor");
-                });
-
-            modelBuilder.Entity("Attencial.API.Models.LeaveRequest", b =>
-                {
-                    b.HasOne("Attencial.API.Models.Professor", "Professor")
-                        .WithMany()
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professor");
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.OnlineAttendanceToken", b =>
@@ -627,6 +599,8 @@ namespace Attencial.API.Migrations
                 {
                     b.Navigation("AttendanceSessions");
 
+                    b.Navigation("EnrollmentRequests");
+
                     b.Navigation("Enrollments");
                 });
 
@@ -634,12 +608,14 @@ namespace Attencial.API.Migrations
                 {
                     b.Navigation("Courses");
 
-                    b.Navigation("FacultyAttendanceRecords");
+                    b.Navigation("FaceVectors");
                 });
 
             modelBuilder.Entity("Attencial.API.Models.Student", b =>
                 {
                     b.Navigation("AttendanceRecords");
+
+                    b.Navigation("EnrollmentRequests");
 
                     b.Navigation("Enrollments");
 

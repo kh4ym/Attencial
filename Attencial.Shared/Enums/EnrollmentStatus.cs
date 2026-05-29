@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace Attencial.Shared.Enums;
 
-namespace Attencial.Shared.Enums
+public enum EnrollmentStatus
 {
-    public enum EnrollmentStatus
-    {
-        Pending,
-        Trained,
-        Failed
-    }
+    Pending,    // Not yet enrolled — no faces submitted
+    Trained,    // Ready for attendance ✅
+    Failed      // Training failed — needs retry
 }
