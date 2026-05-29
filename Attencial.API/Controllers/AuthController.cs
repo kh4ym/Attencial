@@ -266,4 +266,69 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    // PUT /api/auth/update-profile
+    [HttpPut("update-profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role)!;
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+            return NotFound(new ApiResponse<string> { Success = false, Message = "User not found." });
+
+        if (string.IsNullOrWhiteSpace(request.FullName))
+            return BadRequest(new ApiResponse<string> { Success = false, Message = "Full Name is required." });
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(new ApiResponse<string> { Success = false, Message = "Email is required." });
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+        // Check duplicate email if it is changed
+        if (user.Email.ToLower() != normalizedEmail)
+        {
+            var exists = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail && u.Id != userId);
+            if (exists)
+            {
+                return Conflict(new ApiResponse<string> { Success = false, Message = "Email is already in use by another account." });
+            }
+            user.Email = normalizedEmail;
+        }
+
+        if (role == AppConstants.Roles.Student)
+        {
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
+            if (student is not null)
+            {
+                student.FullName = request.FullName.Trim();
+                if (!string.IsNullOrWhiteSpace(request.RollNumber))
+                {
+                    student.RollNumber = request.RollNumber.Trim();
+                }
+            }
+        }
+        else if (role == AppConstants.Roles.Professor)
+        {
+            var professor = await _context.Professors.FirstOrDefaultAsync(p => p.UserId == userId);
+            if (professor is not null)
+            {
+                professor.FullName = request.FullName.Trim();
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new ApiResponse<string> { Success = true, Message = "Profile updated successfully." });
+    }
 }
+
+public class UpdateProfileRequest
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? RollNumber { get; set; }
+}
+

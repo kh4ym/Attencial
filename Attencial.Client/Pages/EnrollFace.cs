@@ -55,7 +55,7 @@ namespace Attencial.Client.Pages
 			__builder.CloseComponent();
 			__builder.AddMarkupContent(3, "\n\n");
 			__builder.OpenElement(4, "div");
-			__builder.AddAttribute(5, "class", "fixed inset-0 z-50 bg-background canvas-bg flex flex-col");
+			__builder.AddAttribute(5, "class", "min-h-screen w-full z-50 bg-background canvas-bg flex flex-col");
 			__builder.OpenElement(6, "header");
 			__builder.AddAttribute(7, "class", "h-14 flex items-center justify-between px-margin-mobile md:px-margin-desktop border-b border-on-surface-variant/20 flex-shrink-0");
 			__builder.AddMarkupContent(8, "<div class=\"flex items-center\"><span class=\"font-display-lg text-headline-md font-bold text-on-surface tracking-tighter\">Attencial</span>\n            <span class=\"font-label-caps text-label-caps text-on-surface-variant ml-4 tracking-[0.2em]\">Face Enrollment</span></div>");
@@ -80,7 +80,7 @@ namespace Attencial.Client.Pages
 			else
 			{
 				__builder.OpenElement(18, "div");
-				__builder.AddAttribute(19, "class", "flex-1 flex flex-col lg:flex-row items-start justify-center pt-4 lg:pt-6 overflow-hidden relative");
+				__builder.AddAttribute(19, "class", "flex-1 flex flex-col lg:flex-row items-start justify-center pt-4 lg:pt-6 overflow-y-auto lg:overflow-hidden relative");
 				__builder.OpenElement(20, "div");
 				__builder.AddAttribute(21, "class", "relative lg:absolute lg:inset-y-0 lg:left-0 w-full lg:w-[calc(100%-420px)] flex items-center justify-center p-4 lg:p-8 transition-all duration-700 ease-in-out " + (cameraActive ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"));
 				__builder.OpenElement(22, "div");
