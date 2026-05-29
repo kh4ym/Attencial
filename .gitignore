@@ -368,3 +368,6 @@ Attencial.API/appsettings.json
 ROADMAP.md
 PROMPT.md
 PROJECT_PROGRESS.html
+.claude/
+.vscode/
+.idea/
