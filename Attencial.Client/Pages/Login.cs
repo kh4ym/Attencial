@@ -190,9 +190,9 @@ namespace Attencial.Client.Pages
 					if (result?.Data?.Token != null)
 					{
 						await JS.InvokeVoidAsync("authStorage.setToken", result.Data.Token);
-						await Task.Delay(200);
+						await JS.InvokeVoidAsync("dashboardPrefetch.start", result.Data.Token, result.Data.Role, result.Data.Email);
 						string uri = ((result.Data.Role == "Professor") ? "professor-dashboard" : "dashboard");
-						Nav.NavigateTo(uri, forceLoad: true);
+						Nav.NavigateTo(uri);
 					}
 					else
 					{

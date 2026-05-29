@@ -144,7 +144,7 @@ public class Attendance : ComponentBase
         }
 
         b.OpenElement(4, "div");
-        b.AddAttribute(5, "class", "canvas-bg min-h-screen pb-24 animate-fade-in");
+        b.AddAttribute(5, "class", "canvas-bg min-h-screen pb-32 md:pb-24 animate-fade-in");
 
         b.OpenElement(6, "div");
         b.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-8");
@@ -190,10 +190,14 @@ public class Attendance : ComponentBase
         {
             var course = summary.CourseAttendance[i];
             var isOpen = expanded.ContainsKey(course.CourseId) && expanded[course.CourseId];
+            var statusLabel = course.Status == "Green" ? "safe" : "warning";
+            var statusStyle = course.Status == "Green"
+                ? "color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08);"
+                : "color: #b0252b; border-color: #b0252b; background: rgba(186,26,26,0.06);";
             var baseIdx = 63 + (i * 40); // unique index range per course
 
             b.OpenElement(baseIdx, "div");
-            b.AddAttribute(baseIdx + 1, "class", "card-neo cursor-pointer transition-all overflow-visible " + (isOpen ? "border-primary" : ""));
+            b.AddAttribute(baseIdx + 1, "class", "card-neo cursor-pointer transition-all overflow-hidden " + (isOpen ? "border-primary" : ""));
             b.AddAttribute(baseIdx + 2, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ToggleCourse(course.CourseId)));
 
             b.OpenElement(baseIdx + 3, "div");
@@ -248,18 +252,18 @@ public class Attendance : ComponentBase
             b.CloseElement();
             b.OpenElement(baseIdx + 28, "span");
             b.AddAttribute(baseIdx + 29, "class", "badge-neo");
-            b.AddAttribute(baseIdx + 31, "style", course.Status == "Green" ? "color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08);" : course.Status == "Yellow" ? "color: #b0252b; border-color: #b0252b; background: #fbf9f6;" : "color: #b0252b; border-color: #b0252b; background: #b0252b;");
-            b.AddContent(baseIdx + 30, course.Status);
+            b.AddAttribute(baseIdx + 31, "style", statusStyle);
+            b.AddContent(baseIdx + 30, statusLabel);
             b.CloseElement();
             b.CloseElement();
 
             if (isOpen)
             {
                 b.OpenElement(baseIdx + 31, "div");
-                b.AddAttribute(baseIdx + 32, "class", "mt-4 border-t border-outline-variant/40 bg-surface-container-low p-3 sm:p-4 animate-slide-down");
+                b.AddAttribute(baseIdx + 32, "class", "mt-4 border-t border-outline-variant/40 bg-surface-container-low p-3 sm:p-4 animate-slide-down max-h-[55vh] sm:max-h-[420px] overflow-hidden flex flex-col");
 
                 b.OpenElement(baseIdx + 33, "div");
-                b.AddAttribute(baseIdx + 34, "class", "space-y-2");
+                b.AddAttribute(baseIdx + 34, "class", "space-y-2 overflow-y-auto pr-1 sm:pr-2 min-h-0");
                 for (int j = 0; j < course.Sessions.Count; j++)
                 {
                     var s = course.Sessions[j];

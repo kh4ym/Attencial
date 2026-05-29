@@ -61,7 +61,7 @@ namespace Attencial.Client.Pages
 			__builder.OpenElement(4, "div");
 			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col overflow-y-auto");
 			__builder.OpenElement(6, "main");
-			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-4 relative z-10 flex-1 min-h-0 flex flex-col animate-fade-in");
+			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-32 md:pb-4 relative z-10 flex-1 min-h-0 flex flex-col animate-fade-in");
 			if (isValidating)
 			{
 				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n                    <p class=\"font-label-caps text-on-surface-variant\">Verifying link...</p></div></div>");

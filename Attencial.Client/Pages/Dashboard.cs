@@ -428,13 +428,17 @@ namespace Attencial.Client.Pages
 			await LoadDashboardData(text);
 		}
 
-		private async Task LoadDashboardData(string token)
+		private async Task LoadDashboardData(string token, bool allowPrefetchCache = true)
 		{
 			isLoading = true;
 			loadError = null;
 			StateHasChanged();
 			try
 			{
+				if (allowPrefetchCache && await TryApplyDashboardPrefetchAsync())
+				{
+					return;
+				}
 				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "api/auth/me");
 				httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 				HttpResponseMessage httpResponseMessage = await Http.SendAsync(httpRequestMessage);
@@ -500,6 +504,61 @@ namespace Attencial.Client.Pages
 			}
 		}
 
+		private async Task<bool> TryApplyDashboardPrefetchAsync()
+		{
+			string text = await JSRuntimeExtensions.InvokeAsync<string>(JS, "dashboardPrefetch.peek", Array.Empty<object>());
+			if (string.IsNullOrWhiteSpace(text))
+			{
+				return false;
+			}
+			try
+			{
+				using JsonDocument jsonDocument = JsonDocument.Parse(text);
+				JsonElement rootElement = jsonDocument.RootElement;
+				userRole = rootElement.GetProperty("role").GetString() ?? string.Empty;
+				userEmail = rootElement.GetProperty("email").GetString() ?? string.Empty;
+				if (userRole == "Professor" && rootElement.TryGetProperty("professor", out JsonElement professorElement))
+				{
+					professorActiveCourses = professorElement.GetProperty("activeCourses").GetInt32();
+					professorTodaySessions = professorElement.GetProperty("todaySessions").GetInt32();
+					professorPendingEnrollments = professorElement.GetProperty("pendingEnrollments").GetInt32();
+					professorPendingAppeals = professorElement.GetProperty("pendingAppeals").GetInt32();
+					await JS.InvokeVoidAsync("dashboardPrefetch.clear");
+					return true;
+				}
+				if (userRole == "Student" && rootElement.TryGetProperty("student", out JsonElement studentElement))
+				{
+					isEnrolled = studentElement.GetProperty("isEnrolled").GetBoolean();
+					enrollmentStatus = studentElement.GetProperty("enrollmentStatus").GetString() ?? (isEnrolled ? "Active" : "Pending");
+					JsonElement summaryElement;
+					if (studentElement.TryGetProperty("summary", out summaryElement) && summaryElement.ValueKind != JsonValueKind.Null && summaryElement.ValueKind != JsonValueKind.Undefined)
+					{
+						studentSummary = JsonSerializer.Deserialize<StudentAttendanceSummaryDto>(summaryElement.GetRawText(), new JsonSerializerOptions
+						{
+							PropertyNameCaseInsensitive = true
+						});
+					}
+					if (studentSummary != null)
+					{
+						totalCourses = studentSummary.TotalCourses;
+						attendanceRate = (int)Math.Round(studentSummary.OverallPercentage);
+						sessionsAttended = studentSummary.PresentSessions;
+					}
+					await JS.InvokeVoidAsync("dashboardPrefetch.clear");
+					if (!isEnrolled)
+					{
+						Nav.NavigateTo("/enroll-face", forceLoad: true);
+					}
+					return studentSummary != null;
+				}
+			}
+			catch
+			{
+				// Ignore malformed cache and fall back to live API calls.
+			}
+			return false;
+		}
+
 		private async Task LoadProfessorSummary(string token)
 		{
 			professorActiveCourses = 0;
@@ -522,45 +581,17 @@ namespace Attencial.Client.Pages
 					return;
 				}
 				using JsonDocument coursesDoc = JsonDocument.Parse(await coursesResponse.Content.ReadAsStringAsync());
-				List<int> courseIds = new List<int>();
-				foreach (JsonElement item in coursesDoc.RootElement.GetProperty("data").EnumerateArray())
-				{
-					courseIds.Add(item.GetProperty("id").GetInt32());
-				}
+				List<int> courseIds = coursesDoc.RootElement.GetProperty("data").EnumerateArray().Select((JsonElement item) => item.GetProperty("id").GetInt32()).ToList();
 				professorActiveCourses = courseIds.Count;
 				DateTime today = DateTime.UtcNow.Date;
-				foreach (int courseId in courseIds)
-				{
-					HttpRequestMessage sessionsRequest = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{courseId}/sessions");
-					sessionsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-					HttpResponseMessage sessionsResponse = await Http.SendAsync(sessionsRequest);
-					if (!sessionsResponse.IsSuccessStatusCode)
-					{
-						continue;
-					}
-					using JsonDocument sessionsDoc = JsonDocument.Parse(await sessionsResponse.Content.ReadAsStringAsync());
-					List<ProfessorSessionDto> sessions = JsonSerializer.Deserialize<List<ProfessorSessionDto>>(sessionsDoc.RootElement.GetProperty("data").GetRawText(), new JsonSerializerOptions
-					{
-						PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-					}) ?? new List<ProfessorSessionDto>();
-					professorTodaySessions += sessions.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
-				}
-				HttpRequestMessage enrollmentsRequest = new HttpRequestMessage(HttpMethod.Get, "api/courses/enrollment-requests/pending");
-				enrollmentsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-				HttpResponseMessage enrollmentsResponse = await Http.SendAsync(enrollmentsRequest);
-				if (enrollmentsResponse.IsSuccessStatusCode)
-				{
-					using JsonDocument enrollmentsDoc = JsonDocument.Parse(await enrollmentsResponse.Content.ReadAsStringAsync());
-					professorPendingEnrollments = enrollmentsDoc.RootElement.GetProperty("data").EnumerateArray().Count();
-				}
-				HttpRequestMessage appealsRequest = new HttpRequestMessage(HttpMethod.Get, "api/professor/appeals/pending");
-				appealsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-				HttpResponseMessage appealsResponse = await Http.SendAsync(appealsRequest);
-				if (appealsResponse.IsSuccessStatusCode)
-				{
-					using JsonDocument appealsDoc = JsonDocument.Parse(await appealsResponse.Content.ReadAsStringAsync());
-					professorPendingAppeals = appealsDoc.RootElement.GetProperty("data").EnumerateArray().Count();
-				}
+				Task<int>[] sessionTasks = courseIds.Select((int courseId) => CountTodaySessionsAsync(token, courseId, today)).ToArray();
+				Task<int> pendingEnrollmentsTask = CountArrayItemsAsync(token, "api/courses/enrollment-requests/pending");
+				Task<int> pendingAppealsTask = CountArrayItemsAsync(token, "api/professor/appeals/pending");
+				Task[] allTasks = sessionTasks.Cast<Task>().Concat(new Task[2] { pendingEnrollmentsTask, pendingAppealsTask }).ToArray();
+				await Task.WhenAll(allTasks);
+				professorTodaySessions = sessionTasks.Sum((Task<int> task) => task.Result);
+				professorPendingEnrollments = pendingEnrollmentsTask.Result;
+				professorPendingAppeals = pendingAppealsTask.Result;
 			}
 			catch (Exception ex)
 			{
@@ -571,6 +602,36 @@ namespace Attencial.Client.Pages
 				isLoading = false;
 				StateHasChanged();
 			}
+		}
+
+		private async Task<int> CountTodaySessionsAsync(string token, int courseId, DateTime today)
+		{
+			HttpRequestMessage sessionsRequest = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{courseId}/sessions");
+			sessionsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage sessionsResponse = await Http.SendAsync(sessionsRequest);
+			if (!sessionsResponse.IsSuccessStatusCode)
+			{
+				return 0;
+			}
+			using JsonDocument sessionsDoc = JsonDocument.Parse(await sessionsResponse.Content.ReadAsStringAsync());
+			List<ProfessorSessionDto> sessions = JsonSerializer.Deserialize<List<ProfessorSessionDto>>(sessionsDoc.RootElement.GetProperty("data").GetRawText(), new JsonSerializerOptions
+			{
+				PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+			}) ?? new List<ProfessorSessionDto>();
+			return sessions.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
+		}
+
+		private async Task<int> CountArrayItemsAsync(string token, string url)
+		{
+			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage response = await Http.SendAsync(request);
+			if (!response.IsSuccessStatusCode)
+			{
+				return 0;
+			}
+			using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+			return doc.RootElement.GetProperty("data").EnumerateArray().Count();
 		}
 
 		protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -603,7 +664,8 @@ namespace Attencial.Client.Pages
 			if (!string.IsNullOrEmpty(text))
 			{
 				hasAnimated = false;
-				await LoadDashboardData(text);
+				await JS.InvokeVoidAsync("dashboardPrefetch.clear");
+				await LoadDashboardData(text, allowPrefetchCache: false);
 			}
 		}
 

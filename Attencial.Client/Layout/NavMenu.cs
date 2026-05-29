@@ -144,7 +144,7 @@ namespace Attencial.Client.Layout
 				__builder.AddAttribute(83, "href", dashHref);
 				__builder.AddAttribute(84, "class", "mobile-nav-item " + (GetActive(dashHref) ? "active" : ""));
 				__builder.AddAttribute(85, "b-c8fp1rjic8");
-				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">space_dashboard</span>\n                    <span class=\"nav-label\">" + dashLabel + "</span>");
+				__builder.AddMarkupContent(86, "<span class=\"material-symbols-outlined nav-icon\">" + (userRole == "Professor" ? "insights" : "space_dashboard") + "</span>\n                    <span class=\"nav-label\">" + dashLabel + "</span>");
 				__builder.CloseElement();
 
 				// Dashboard (professors only)
@@ -211,12 +211,7 @@ namespace Attencial.Client.Layout
 		{
 			currentUri = Nav.ToBaseRelativePath(Nav.Uri);
 			Nav.LocationChanged += OnLocationChanged;
-			string text = await JSRuntimeExtensions.InvokeAsync<string>(JS, "authStorage.getToken", Array.Empty<object>());
-			isLoggedIn = !string.IsNullOrEmpty(text) && text != "null" && text != "undefined";
-			if (isLoggedIn)
-			{
-				await LoadRole(text);
-			}
+			await RefreshAuthState();
 		}
 
 		private async Task LoadRole(string token)
@@ -242,10 +237,23 @@ namespace Attencial.Client.Layout
 			}
 		}
 
-		private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+		private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
 		{
 			currentUri = Nav.ToBaseRelativePath(e.Location);
+			await RefreshAuthState();
 			StateHasChanged();
+		}
+
+		private async Task RefreshAuthState()
+		{
+			string text = await JSRuntimeExtensions.InvokeAsync<string>(JS, "authStorage.getToken", Array.Empty<object>());
+			isLoggedIn = !string.IsNullOrEmpty(text) && text != "null" && text != "undefined";
+			if (isLoggedIn)
+			{
+				await LoadRole(text);
+				return;
+			}
+			userRole = string.Empty;
 		}
 
 		private bool GetActive(string path)

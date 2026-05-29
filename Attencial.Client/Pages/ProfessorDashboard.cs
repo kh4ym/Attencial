@@ -911,58 +911,14 @@ namespace Attencial.Client.Pages
 						}
 					}
 					DateTime today = DateTime.UtcNow.Date;
-					foreach (CourseItem course in courses)
-					{
-						HttpRequestMessage httpRequestMessage2 = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{course.Id}/sessions");
-						httpRequestMessage2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-						HttpResponseMessage httpResponseMessage2 = await Http.SendAsync(httpRequestMessage2);
-						if (httpResponseMessage2.IsSuccessStatusCode)
-						{
-							using JsonDocument jsonDocument2 = JsonDocument.Parse(await httpResponseMessage2.Content.ReadAsStringAsync());
-							List<ProfessorSessionDto> list = JsonSerializer.Deserialize<List<ProfessorSessionDto>>(jsonDocument2.RootElement.GetProperty("data").GetRawText(), new JsonSerializerOptions
-							{
-								PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-							}) ?? new List<ProfessorSessionDto>();
-							course.TotalSessions = list.Count;
-							course.LastSessionDate = ((list.Count > 0) ? new DateTime?(list.Max((ProfessorSessionDto s) => s.StartTime)) : ((DateTime?)null));
-							todaySessionCount += list.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
-						}
-						HttpRequestMessage httpRequestMessage3 = new HttpRequestMessage(HttpMethod.Get, $"api/attendance/courses/{course.Id}/enrolled-students");
-						httpRequestMessage3.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-						HttpResponseMessage httpResponseMessage3 = await Http.SendAsync(httpRequestMessage3);
-						if (httpResponseMessage3.IsSuccessStatusCode)
-						{
-							using JsonDocument jsonDocument3 = JsonDocument.Parse(await httpResponseMessage3.Content.ReadAsStringAsync());
-							course.EnrolledCount = jsonDocument3.RootElement.GetProperty("data").EnumerateArray().Count();
-						}
-					}
-					HttpRequestMessage httpRequestMessage4 = new HttpRequestMessage(HttpMethod.Get, "api/courses/enrollment-requests/pending");
-					httpRequestMessage4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-					HttpResponseMessage httpResponseMessage4 = await Http.SendAsync(httpRequestMessage4);
-					if (httpResponseMessage4.IsSuccessStatusCode)
-					{
-						using JsonDocument jsonDocument4 = JsonDocument.Parse(await httpResponseMessage4.Content.ReadAsStringAsync());
-						pendingEnrollments = jsonDocument4.RootElement.GetProperty("data").EnumerateArray().Count();
-					}
-
-			// Load pending appeals count
-			HttpRequestMessage appealRequest = new HttpRequestMessage(HttpMethod.Get, "api/professor/appeals/pending");
-			appealRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-			HttpResponseMessage appealResponse = await Http.SendAsync(appealRequest);
-			if (appealResponse.IsSuccessStatusCode)
-			{
-				using JsonDocument appealDoc = JsonDocument.Parse(await appealResponse.Content.ReadAsStringAsync());
-				var appealsList = new List<AppealItem>();
-				foreach (JsonElement item in appealDoc.RootElement.GetProperty("data").EnumerateArray())
-				{
-					appealsList.Add(new AppealItem
-					{
-						Id = item.GetProperty("id").GetInt32(),
-						Status = item.GetProperty("status").GetString() ?? ""
-					});
-				}
-				pendingAppealCount = appealsList.Count(a => a.Status == "Pending");
-			}
+					Task<int>[] courseTasks = courses.Select((CourseItem course) => LoadCourseSummaryAsync(course, jwtToken, today)).ToArray();
+					Task<int> pendingEnrollmentsTask = CountArrayItemsAsync(jwtToken, "api/courses/enrollment-requests/pending");
+					Task<int> pendingAppealsTask = CountArrayItemsAsync(jwtToken, "api/professor/appeals/pending");
+					Task[] allTasks = courseTasks.Cast<Task>().Concat(new Task[2] { pendingEnrollmentsTask, pendingAppealsTask }).ToArray();
+					await Task.WhenAll(allTasks);
+					todaySessionCount = courseTasks.Sum((Task<int> task) => task.Result);
+					pendingEnrollments = pendingEnrollmentsTask.Result;
+					pendingAppealCount = pendingAppealsTask.Result;
 				}
 				else if (httpResponseMessage.StatusCode == HttpStatusCode.NotFound)
 				{
@@ -1039,6 +995,48 @@ namespace Attencial.Client.Pages
 			{
 				StateHasChanged();
 			}
+		}
+
+		private async Task<int> LoadCourseSummaryAsync(CourseItem course, string token, DateTime today)
+		{
+			HttpRequestMessage sessionsRequest = new HttpRequestMessage(HttpMethod.Get, $"api/professor/courses/{course.Id}/sessions");
+			sessionsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpRequestMessage enrolledRequest = new HttpRequestMessage(HttpMethod.Get, $"api/attendance/courses/{course.Id}/enrolled-students");
+			enrolledRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			Task<HttpResponseMessage> sessionsTask = Http.SendAsync(sessionsRequest);
+			Task<HttpResponseMessage> enrolledTask = Http.SendAsync(enrolledRequest);
+			await Task.WhenAll(sessionsTask, enrolledTask);
+			int todayCount = 0;
+			if (sessionsTask.Result.IsSuccessStatusCode)
+			{
+				using JsonDocument jsonDocument = JsonDocument.Parse(await sessionsTask.Result.Content.ReadAsStringAsync());
+				List<ProfessorSessionDto> list = JsonSerializer.Deserialize<List<ProfessorSessionDto>>(jsonDocument.RootElement.GetProperty("data").GetRawText(), new JsonSerializerOptions
+				{
+					PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+				}) ?? new List<ProfessorSessionDto>();
+				course.TotalSessions = list.Count;
+				course.LastSessionDate = ((list.Count > 0) ? new DateTime?(list.Max((ProfessorSessionDto s) => s.StartTime)) : ((DateTime?)null));
+				todayCount = list.Count((ProfessorSessionDto s) => s.StartTime.Date == today);
+			}
+			if (enrolledTask.Result.IsSuccessStatusCode)
+			{
+				using JsonDocument jsonDocument2 = JsonDocument.Parse(await enrolledTask.Result.Content.ReadAsStringAsync());
+				course.EnrolledCount = jsonDocument2.RootElement.GetProperty("data").EnumerateArray().Count();
+			}
+			return todayCount;
+		}
+
+		private async Task<int> CountArrayItemsAsync(string token, string url)
+		{
+			HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+			httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage httpResponseMessage = await Http.SendAsync(httpRequestMessage);
+			if (!httpResponseMessage.IsSuccessStatusCode)
+			{
+				return 0;
+			}
+			using JsonDocument jsonDocument = JsonDocument.Parse(await httpResponseMessage.Content.ReadAsStringAsync());
+			return jsonDocument.RootElement.GetProperty("data").EnumerateArray().Count();
 		}
 
 		private async Task ReloadDashboard(bool preserveExpandedCourse = false)
