@@ -303,7 +303,7 @@ namespace Attencial.Client.Pages
 						__builder.OpenElement(100, "div");
 						__builder.AddAttribute(101, "class", "flex-1");
 						__builder.OpenElement(102, "div");
-						__builder.AddAttribute(103, "class", "flex items-center justify-between w-full pr-4 mb-2");
+						__builder.AddAttribute(103, "class", "flex items-center gap-4 mb-2");
 						__builder.OpenElement(104, "div");
 						__builder.AddAttribute(105, "class", "flex items-center gap-3");
 						__builder.OpenElement(106, "span");

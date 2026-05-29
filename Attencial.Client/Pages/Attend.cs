@@ -61,7 +61,7 @@ namespace Attencial.Client.Pages
 			__builder.OpenElement(4, "div");
 			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col overflow-y-auto");
 			__builder.OpenElement(6, "main");
-			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-32 md:pb-4 relative z-10 flex-1 min-h-0 flex flex-col animate-fade-in");
+			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-28 pb-32 md:pb-4 relative z-10 lg:flex-1 lg:min-h-0 flex flex-col animate-fade-in");
 			if (isValidating)
 			{
 				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n                    <p class=\"font-label-caps text-on-surface-variant\">Verifying link...</p></div></div>");
@@ -103,9 +103,9 @@ namespace Attencial.Client.Pages
 			else
 			{
 				__builder.OpenElement(31, "div");
-				__builder.AddAttribute(32, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
+				__builder.AddAttribute(32, "class", "lg:flex-1 flex flex-col lg:flex-row gap-4 lg:min-h-0");
 				__builder.OpenElement(33, "div");
-				__builder.AddAttribute(34, "class", "flex-[2] flex flex-col min-h-0");
+				__builder.AddAttribute(34, "class", "flex-[2] flex flex-col lg:min-h-0");
 				__builder.AddMarkupContent(35, "<div class=\"flex flex-col gap-3 mb-5 flex-shrink-0\"><div class=\"flex items-center gap-3\"><h1 class=\"font-headline-md text-headline-md\">Mark Attendance</h1>\n                        <div class=\"flex gap-2\"><div class=\"w-3 h-3 bg-primary\"></div>\n                            <div class=\"w-3 h-3 bg-tertiary\"></div></div></div><p class=\"font-body-md text-sm text-on-surface-variant max-w-2xl\">Open the camera when you are ready. The capture button appears only after the feed is live.</p></div>");
 				if (!string.IsNullOrEmpty(message))
 				{
@@ -123,7 +123,7 @@ namespace Attencial.Client.Pages
 					__builder.CloseElement();
 				}
 				__builder.OpenElement(45, "div");
-				__builder.AddAttribute(46, "class", "relative flex-1 bg-surface overflow-hidden rounded-2xl min-h-[420px] border border-on-surface-variant/20 shadow-[8px_8px_0px_rgba(27,28,26,0.08)]");
+				__builder.AddAttribute(46, "class", "relative w-full aspect-[4/3] md:aspect-auto md:flex-1 bg-surface overflow-hidden rounded-2xl md:min-h-[420px] border border-on-surface-variant/20 shadow-[8px_8px_0px_rgba(27,28,26,0.08)]");
 				if (cameraStarted || isCameraStarting)
 				{
 					__builder.OpenElement(47, "video");

@@ -118,11 +118,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
 app.Run();

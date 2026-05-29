@@ -125,9 +125,9 @@ namespace Attencial.Client.Pages
 			__builder.CloseComponent();
 			__builder.AddMarkupContent(3, "\n\n");
 			__builder.OpenElement(4, "div");
-			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col");
+			__builder.AddAttribute(5, "class", "fixed inset-0 bg-background text-on-surface font-body-md canvas-bg flex flex-col overflow-y-auto");
 			__builder.OpenElement(6, "main");
-			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-20 md:pt-28 pb-24 md:pb-4 relative z-10 flex-1 min-h-0 flex flex-col");
+			__builder.AddAttribute(7, "class", "max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-20 md:pt-28 pb-24 md:pb-4 relative z-10 lg:flex-1 lg:min-h-0 flex flex-col");
 			if (!isAuthorized)
 			{
 				__builder.AddMarkupContent(8, "<div class=\"flex-1 flex items-center justify-center\"><div class=\"text-center\"><div class=\"spinner-ring-lg mb-4\"></div>\n                    <p class=\"font-label-caps text-on-surface-variant\">Checking authorization...</p></div></div>");
@@ -180,9 +180,9 @@ namespace Attencial.Client.Pages
 			else if (activeSession == null)
 			{
 				__builder.OpenElement(37, "div");
-				__builder.AddAttribute(38, "class", "flex-1 flex flex-col lg:flex-row gap-3 min-h-0");
+				__builder.AddAttribute(38, "class", "lg:flex-1 flex flex-col lg:flex-row gap-3 lg:min-h-0");
 				__builder.OpenElement(39, "div");
-				__builder.AddAttribute(40, "class", "flex-[2] flex flex-col min-h-0");
+				__builder.AddAttribute(40, "class", "flex-[2] flex flex-col lg:min-h-0");
 				__builder.AddMarkupContent(41, "<div class=\"flex items-center gap-4 mb-2 flex-shrink-0\"><h1 class=\"font-headline-lg text-headline-lg\">Session Controller</h1>\n                        <div class=\"flex gap-2\"><div class=\"w-3 h-3 bg-primary\"></div>\n                            <div class=\"w-3 h-3 bg-tertiary\"></div>\n                            <div class=\"w-3 h-3 bg-secondary\"></div></div></div>");
 				if (!string.IsNullOrEmpty(errorMessage))
 				{
@@ -360,9 +360,9 @@ namespace Attencial.Client.Pages
 			else
 			{
 				__builder.OpenElement(135, "div");
-				__builder.AddAttribute(136, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
+				__builder.AddAttribute(136, "class", "lg:flex-1 flex flex-col lg:flex-row gap-4 lg:min-h-0");
 				__builder.OpenElement(137, "div");
-				__builder.AddAttribute(138, "class", "flex-[2] flex flex-col min-h-0");
+				__builder.AddAttribute(138, "class", "flex-[2] flex flex-col lg:min-h-0");
 				__builder.OpenElement(139, "div");
 				__builder.AddAttribute(140, "class", "flex items-center gap-4 mb-2 flex-shrink-0");
 				__builder.OpenElement(141, "div");
@@ -412,9 +412,9 @@ namespace Attencial.Client.Pages
 				else
 				{
 					__builder.OpenElement(169, "div");
-					__builder.AddAttribute(170, "class", "flex-1 flex flex-col lg:flex-row gap-4 min-h-0");
+					__builder.AddAttribute(170, "class", "lg:flex-1 flex flex-col lg:flex-row gap-4 lg:min-h-0");
 					__builder.OpenElement(171, "div");
-					__builder.AddAttribute(172, "class", "flex-[2] flex flex-col items-center justify-center border border-on-surface bg-surface p-5 gap-4 min-h-0");
+					__builder.AddAttribute(172, "class", "w-full flex-[2] flex flex-col items-center justify-center border border-on-surface bg-surface p-5 gap-4 lg:min-h-0");
 					__builder.AddMarkupContent(173, "<div class=\"qr-frame mx-auto\"><div id=\"qrContainer\" class=\"qr-container\"></div></div>\n                                ");
 					__builder.OpenElement(174, "div");
 					__builder.AddAttribute(175, "class", "flex gap-10");
@@ -444,7 +444,7 @@ namespace Attencial.Client.Pages
 					__builder.CloseElement();
 					__builder.AddMarkupContent(194, "\n                            ");
 					__builder.OpenElement(195, "div");
-					__builder.AddAttribute(196, "class", "w-full lg:w-80 flex flex-col border border-on-surface bg-surface-container-low p-5 min-h-0");
+					__builder.AddAttribute(196, "class", "w-full lg:w-80 flex flex-col border border-on-surface bg-surface-container-low p-5 lg:min-h-0");
 					__builder.OpenElement(197, "div");
 					__builder.AddAttribute(198, "class", "flex justify-between items-center mb-3 flex-shrink-0");
 					__builder.AddMarkupContent(199, "<span class=\"font-label-caps text-xs tracking-widest\">Check-in Log</span>\n                                    ");
@@ -1010,27 +1010,6 @@ namespace Attencial.Client.Pages
 			}
 		}
 
-		[JSInvokable]
-		public async Task OnAttendanceMarkedSimulated(int studentId, string studentName, string rollNumber, double confidence, string markedAtStr)
-		{
-			if (!presentStudents.Any((PresentRecord p) => p.StudentId == studentId))
-			{
-				DateTime result;
-				PresentRecord record = new PresentRecord
-				{
-					StudentId = studentId,
-					StudentName = studentName,
-					RollNumber = rollNumber,
-					Confidence = (float)confidence,
-					MarkedAt = (DateTime.TryParse(markedAtStr, out result) ? result : DateTime.UtcNow)
-				};
-				await InvokeAsync(delegate
-				{
-					presentStudents.Insert(0, record);
-					StateHasChanged();
-				});
-			}
-		}
 
 		private async Task CreateProfessorProfile()
 		{

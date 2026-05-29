@@ -44,7 +44,7 @@ namespace Attencial.Client.Layout
 			__builder.OpenElement(6, "div");
 			__builder.AddAttribute(7, "class", "flex items-center gap-8");
 			__builder.AddAttribute(8, "b-c8fp1rjic8");
-			__builder.AddMarkupContent(9, "<a href=\"/\" class=\"flex items-center gap-2 no-underline\" b-c8fp1rjic8><span class=\"material-symbols-outlined text-primary text-2xl animate-blink\" b-c8fp1rjic8>visibility</span>\n                <span class=\"font-display-lg text-headline-md font-bold text-on-surface tracking-tighter\" b-c8fp1rjic8>Attencial</span></a>\n            ");
+			__builder.AddMarkupContent(9, "<a href=\"/\" class=\"flex items-center gap-1 md:gap-2 no-underline\" b-c8fp1rjic8><span class=\"material-symbols-outlined text-primary text-xl md:text-2xl animate-blink\" b-c8fp1rjic8>visibility</span>\n                <span class=\"font-display-lg text-xl md:text-headline-md font-bold text-on-surface tracking-tighter\" b-c8fp1rjic8>Attencial</span></a>");
 			__builder.OpenElement(10, "nav");
 			__builder.AddAttribute(11, "class", "hidden md:flex gap-6");
 			__builder.AddAttribute(12, "b-c8fp1rjic8");
