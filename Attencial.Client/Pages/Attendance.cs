@@ -353,7 +353,7 @@ public class Attendance : ComponentBase
                 b.AddMarkupContent(2007, "<p class=\"font-body-md text-on-surface-variant text-sm mb-6\">Your appeal has been successfully submitted to your professor for review.</p>");
                 b.OpenElement(2008, "button");
                 b.AddAttribute(2009, "class", "btn-neo-primary w-full text-sm");
-                b.AddAttribute(2010, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, CloseAppeal));
+                b.AddAttribute(2010, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => CloseAppeal()));
                 b.AddContent(2011, "Great!");
                 b.CloseElement();
                 b.CloseElement();
@@ -398,7 +398,7 @@ public class Attendance : ComponentBase
                 b.AddAttribute(2026, "class", "flex gap-3 justify-end");
                 b.OpenElement(2026, "button");
                 b.AddAttribute(2027, "class", "btn-neo-outline text-sm");
-                b.AddAttribute(2028, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, CloseAppeal));
+                b.AddAttribute(2028, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => CloseAppeal()));
                 b.AddContent(2029, "Cancel");
                 b.CloseElement();
                 b.OpenElement(2030, "button");

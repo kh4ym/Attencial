@@ -38,10 +38,10 @@ namespace Attencial.Client.Pages
 			__builder.OpenElement(6, "header");
 			__builder.AddAttribute(7, "class", "bg-background border-b border-on-surface-variant/20 fixed top-0 left-0 right-0 z-50");
 			__builder.OpenElement(8, "nav");
-			__builder.AddAttribute(9, "class", "flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-20 max-w-max-width mx-auto");
+			__builder.AddAttribute(9, "class", "flex justify-between items-center w-full px-4 md:px-margin-desktop h-20 max-w-max-width mx-auto");
 			__builder.OpenElement(10, "div");
-			__builder.AddAttribute(11, "class", "flex items-center gap-6 md:gap-12");
-			__builder.AddMarkupContent(12, "<a href=\"/\" class=\"flex items-center gap-3 no-underline group\"><div class=\"w-8 h-8 md:w-10 md:h-10 border-2 border-primary flex items-center justify-center relative\"><span class=\"material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform\">visibility</span>\n                        <div class=\"absolute -top-[2px] -right-[2px] w-2 h-2 bg-primary rounded-full\"></div></div>\n                    <div class=\"flex flex-col leading-none\"><span class=\"font-display-lg text-headline-md font-bold text-on-surface tracking-tighter\">Attencial</span>\n                        <span class=\"font-label-caps text-[8px] text-primary tracking-[0.2em] mt-0.5\">ACADEMIC</span></div></a>");
+			__builder.AddAttribute(11, "class", "flex items-center gap-4 md:gap-12");
+			__builder.AddMarkupContent(12, "<a href=\"/\" class=\"flex items-center gap-2 md:gap-3 no-underline group\"><div class=\"w-8 h-8 md:w-10 md:h-10 border-2 border-primary flex items-center justify-center relative\"><span class=\"material-symbols-outlined text-primary text-xl md:text-2xl group-hover:scale-110 transition-transform\">visibility</span>\n                        <div class=\"absolute -top-[2px] -right-[2px] w-2 h-2 bg-primary rounded-full\"></div></div>\n                    <div class=\"flex flex-col leading-none\"><span class=\"font-display-lg text-xl md:text-headline-md font-bold text-on-surface tracking-tighter\">Attencial</span>\n                        <span class=\"font-label-caps text-[8px] text-primary tracking-[0.2em] mt-0.5\">ACADEMIC</span></div></a>");
 			if (isLoggedIn)
 			{
 				__builder.AddMarkupContent(13, "<div class=\"hidden md:flex gap-8\"><a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"dashboard\">Dashboard</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"session\">Start Session</a>\n                        <a class=\"text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors duration-300 no-underline\" href=\"professor-dashboard\">Analytics</a></div>");
@@ -49,7 +49,7 @@ namespace Attencial.Client.Pages
 			__builder.CloseElement();
 			__builder.AddMarkupContent(14, "\n            ");
 			__builder.OpenElement(15, "div");
-			__builder.AddAttribute(16, "class", "flex items-center gap-4 md:gap-6");
+			__builder.AddAttribute(16, "class", "flex items-center gap-2 md:gap-6");
 			if (isLoggedIn)
 			{
 				__builder.AddMarkupContent(18, "<a class=\"material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors no-underline\" href=\"profile\" title=\"Profile\" aria-label=\"Profile\">person</a>");
@@ -62,8 +62,8 @@ namespace Attencial.Client.Pages
 			}
 			else
 			{
-				__builder.AddMarkupContent(19, "<a class=\"font-label-caps text-label-caps bg-primary text-surface px-3 py-2 md:px-5 md:py-3 no-underline transition-all duration-300 hover:scale-[1.03] inline-block animate-pulse-subtle border border-primary text-xs md:text-label-caps\" href=\"login\">LOGIN</a>\n                    ");
-				__builder.AddMarkupContent(20, "<a class=\"font-label-caps text-label-caps bg-surface text-on-surface border border-on-surface px-3 py-2 md:px-5 md:py-3 no-underline transition-all duration-300 hover:scale-[1.03] hover:bg-[#fdf5f5] hover:border-primary/40 inline-block text-xs md:text-label-caps\" href=\"register\">SIGN UP</a>");
+				__builder.AddMarkupContent(19, "<a class=\"font-label-caps text-label-caps bg-primary text-surface px-2.5 py-1.5 md:px-5 md:py-3 no-underline transition-all duration-300 hover:scale-[1.03] inline-block animate-pulse-subtle border border-primary text-xs md:text-label-caps\" href=\"login\">LOGIN</a>\n                    ");
+				__builder.AddMarkupContent(20, "<a class=\"font-label-caps text-label-caps bg-surface text-on-surface border border-on-surface px-2.5 py-1.5 md:px-5 md:py-3 no-underline transition-all duration-300 hover:scale-[1.03] hover:bg-[#fdf5f5] hover:border-primary/40 inline-block text-xs md:text-label-caps\" href=\"register\">SIGN UP</a>");
 			}
 			__builder.CloseElement();
 			__builder.CloseElement();
