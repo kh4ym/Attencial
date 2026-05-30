@@ -3,8 +3,10 @@
   <img src="https://img.shields.io/badge/Blazor-WASM-512BD4?style=for-the-badge&logo=blazor&logoColor=white" alt="Blazor WASM" />
   <img src="https://img.shields.io/badge/AWS-Rekognition-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS Rekognition" />
   <img src="https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <br />
   <img src="https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/TailwindCSS-v3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS" />
+ <img src="https://img.shields.io/badge/Azure-Deployment-0089D6?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Azure Deployment" />
 </p>
 
 <h1 align="center">🎯 Attencial</h1>
