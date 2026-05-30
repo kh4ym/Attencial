@@ -64,7 +64,7 @@ The system serves three distinct user roles — **Students**, **Professors**, an
 ### 🧑‍🎓 For Students
 - **Face Enrollment** — Capture 3 photos via webcam, indexed into AWS Rekognition collection
 - **One-Scan Attendance** — Scan QR code → face verification → attendance marked in seconds
-- **Personal Dashboard** — Per-course attendance percentages with color-coded warnings (green ≥75%, yellow 65–74%, red <65%)
+- **Personal Dashboard** — Per-course attendance percentages with color-coded warnings 
 - **Course Enrollment** — Browse available courses, enroll, and track enrollment status
 - **Attendance Appeals** — Submit appeals for missed attendance with professor review workflow
 - **Profile Management** — View enrollment status, face registration details, and account info
