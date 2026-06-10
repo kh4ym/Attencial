@@ -1,0 +1,53 @@
+﻿@page "/professor/dashboard"
+@attribute [Authorize(Roles = "Professor")]
+@inject ProfessorService ProfessorService
+@inject NavigationManager Nav
+
+<PageTitle>Professor Dashboard – Attencial</PageTitle>
+
+<div class="hdr">
+    <h1 class="page-title">Professor Dashboard</h1>
+    <p class="page-subtitle">Manage classes, mark attendance, and view reports.</p>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading dashboard..." />
+}
+else
+{
+    <div class="stats-grid">
+        <StatCard Title="My Classes" Value="@classes.Count.ToString()" Icon="🏫"
+                  IconBgColor="rgba(108,99,255,0.1)" IconColor="var(--accent)"
+                  Subtitle="This semester" SubtitleClass="text-muted" />
+        <StatCard Title="Total Students" Value="@classes.Sum(c => c.TotalStudents).ToString()" Icon="👥"
+                  IconBgColor="rgba(76,175,125,0.1)" IconColor="var(--success)"
+                  Subtitle="Across all classes" SubtitleClass="text-muted" />
+        <StatCard Title="Total Lectures" Value="@classes.Sum(c => c.TotalLectures).ToString()" Icon="📝"
+                  IconBgColor="rgba(245,166,35,0.1)" IconColor="var(--warning)"
+                  Subtitle="Recorded so far" SubtitleClass="text-muted" />
+    </div>
+
+    <h2 class="section-title">My Classes</h2>
+    <div class="cards">
+        @foreach (var c in classes)
+        {
+            <div class="card">
+                <div class="card-top">
+                    <span class="code">@c.Code</span>
+                    <span class="stu">👥 @c.TotalStudents</span>
+                </div>
+                <h3 class="card-name">@c.Name</h3>
+                <div class="card-actions">
+                    <button class="btn-accent" @onclick="() => Nav.NavigateTo($&quot;/professor/mark-attendance?classId={c.Id}&quot;)">📝 Mark Attendance</button>
+                    <button class="btn-ghost" @onclick="() => Nav.NavigateTo($&quot;/professor/reports?classId={c.Id}&quot;)">📊 Reports</button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    bool isLoading = true; List<CourseDto> classes = new();
+    protected override async Task OnInitializedAsync() { classes = await ProfessorService.GetProfessorClassesAsync(); isLoading = false; }
+}

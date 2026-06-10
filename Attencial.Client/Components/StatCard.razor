@@ -1,0 +1,23 @@
+﻿<div class="stat-card">
+    <div class="stat-card-header">
+        <span class="stat-title">@Title</span>
+        <span class="stat-icon" style="background-color: @IconBgColor; color: @IconColor;">@Icon</span>
+    </div>
+    <div class="stat-card-body">
+        <h3 class="stat-value">@Value</h3>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <div class="stat-subtitle @SubtitleClass">@Subtitle</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "📊";
+    [Parameter] public string IconBgColor { get; set; } = "rgba(108, 99, 255, 0.1)";
+    [Parameter] public string IconColor { get; set; } = "var(--accent)";
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+    [Parameter] public string SubtitleClass { get; set; } = "text-muted";
+}

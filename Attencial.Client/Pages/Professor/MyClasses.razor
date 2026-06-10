@@ -1,0 +1,38 @@
+﻿@page "/professor/classes"
+@attribute [Authorize(Roles = "Professor")]
+@inject ProfessorService ProfessorService
+
+<PageTitle>My Classes – Attencial</PageTitle>
+
+<div class="hdr">
+    <h1 class="page-title">My Classes</h1>
+    <p class="page-subtitle">All the classes you teach this semester.</p>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading classes..." />
+}
+else
+{
+    <div class="list">
+        @foreach (var c in classes)
+        {
+            <div class="row">
+                <div class="left">
+                    <span class="code">@c.Code</span>
+                    <h3>@c.Name</h3>
+                </div>
+                <div class="right">
+                    <div class="stat"><small>Students</small><strong>@c.TotalStudents</strong></div>
+                    <div class="stat"><small>Lectures</small><strong>@c.TotalLectures</strong></div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    bool isLoading = true; List<CourseDto> classes = new();
+    protected override async Task OnInitializedAsync() { classes = await ProfessorService.GetProfessorClassesAsync(); isLoading = false; }
+}

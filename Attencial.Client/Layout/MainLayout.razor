@@ -1,16 +1,32 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<AuthorizeView>
+    <Authorized>
+        @* Full layout with sidebar for authenticated users *@
+        <div class="app-shell">
+            <aside class="sidebar">
+                <NavMenu />
+            </aside>
+            <div class="main-area">
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <span class="app-title">Attencial</span>
+                    </div>
+                    <div class="topbar-right">
+                        <span class="user-email">@context.User.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value</span>
+                    </div>
+                </header>
+                <main class="page-content">
+                    @Body
+                </main>
+            </div>
         </div>
+    </Authorized>
 
-        <article class="content px-4">
+    <NotAuthorized>
+        @* Minimal layout (no sidebar) for login/register pages *@
+        <div class="auth-shell">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

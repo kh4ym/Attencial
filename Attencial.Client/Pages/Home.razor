@@ -1,7 +1,27 @@
 ﻿@page "/"
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<PageTitle>Home</PageTitle>
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            if (user.IsInRole("Student"))
+                Nav.NavigateTo("/student/dashboard");
+            else if (user.IsInRole("Professor"))
+                Nav.NavigateTo("/professor/dashboard");
+            else if (user.IsInRole("Admin"))
+                Nav.NavigateTo("/admin/dashboard");
+            else
+                Nav.NavigateTo("/login");
+        }
+        else
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+}

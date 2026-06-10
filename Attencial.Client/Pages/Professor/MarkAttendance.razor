@@ -1,0 +1,117 @@
+﻿@page "/professor/mark-attendance"
+@attribute [Authorize(Roles = "Professor")]
+@inject ProfessorService ProfessorService
+@inject NavigationManager Nav
+
+<PageTitle>Mark Attendance – Attencial</PageTitle>
+
+<div class="hdr">
+    <h1 class="page-title">Mark Attendance</h1>
+    <p class="page-subtitle">Select a class, set the date, and mark each student.</p>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading classes..." />
+}
+else
+{
+    <div class="form-section">
+        <div class="row-inputs">
+            <div class="field">
+                <label>Select Class</label>
+                <select class="inp" @bind="selectedClassId" @bind:after="LoadStudents">
+                    <option value="0">-- Choose Class --</option>
+                    @foreach (var c in classes)
+                    {
+                        <option value="@c.Id">@c.Name (@c.Code)</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Date</label>
+                <input type="date" class="inp" @bind="attendanceDate" />
+            </div>
+        </div>
+    </div>
+
+    @if (students.Any())
+    {
+        <div class="table-section">
+            <div class="mark-all">
+                <button class="btn-sm good" @onclick="() => SetAll(&quot; Present & quot;)">✅ All Present</button>
+                <button class="btn-sm warn" @onclick="() => SetAll(&quot; Late & quot;)">⏰ All Late</button>
+                <button class="btn-sm bad" @onclick="() => SetAll(&quot; Absent & quot;)">❌ All Absent</button>
+            </div>
+            <table class="tbl">
+                <thead><tr><th>#</th><th>Student Name</th><th>Email</th><th>Status</th></tr></thead>
+                <tbody>
+                    @for (int i = 0; i < markings.Count; i++)
+                    {
+                        var idx = i;
+                        <tr>
+                            <td>@(idx + 1)</td>
+                            <td><strong>@markings[idx].StudentName</strong></td>
+                            <td>@students[idx].Email</td>
+                            <td>
+                                <select class="inp-sm" @bind="markings[idx].Status">
+                                    <option value="Present">Present</option>
+                                    <option value="Absent">Absent</option>
+                                    <option value="Late">Late</option>
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="submit-row">
+                @if (!string.IsNullOrEmpty(msg))
+                {
+                    <span class="msg @msgType">@msg</span>
+                }
+                <button class="btn-accent" @onclick="SubmitAttendance" disabled="@submitting">
+                    @(submitting ? "Submitting..." : "📤 Submit Attendance")
+                </button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    bool isLoading = true; bool submitting;
+    List<CourseDto> classes = new(); List<StudentDto> students = new();
+    List<StudentAttendanceMarkDto> markings = new();
+    int selectedClassId; DateTime attendanceDate = DateTime.Today;
+    string msg = ""; string msgType = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        classes = await ProfessorService.GetProfessorClassesAsync();
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("classId", out var val))
+        {
+            if (int.TryParse(val, out var id)) { selectedClassId = id; await LoadStudents(); }
+        }
+        isLoading = false;
+    }
+
+    async Task LoadStudents()
+    {
+        if (selectedClassId == 0) { students.Clear(); markings.Clear(); return; }
+        students = await ProfessorService.GetStudentsInClassAsync(selectedClassId);
+        markings = students.Select(s => new StudentAttendanceMarkDto { StudentId = s.Id, StudentName = s.Name, Status = "Present" }).ToList();
+        msg = "";
+    }
+
+    void SetAll(string status) { foreach (var m in markings) m.Status = status; }
+
+    async Task SubmitAttendance()
+    {
+        submitting = true;
+        var req = new AttendanceMarkRequest { CourseId = selectedClassId, Date = attendanceDate, Markings = markings };
+        var ok = await ProfessorService.SubmitAttendanceAsync(req);
+        msg = ok ? "✅ Attendance submitted successfully!" : "❌ Failed to submit.";
+        msgType = ok ? "success" : "error";
+        submitting = false;
+    }
+}

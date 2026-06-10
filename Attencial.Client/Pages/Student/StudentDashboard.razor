@@ -1,0 +1,64 @@
+﻿@page "/student/dashboard"
+@attribute [Authorize(Roles = "Student")]
+@inject StudentService StudentService
+
+<PageTitle>Student Dashboard – Attencial</PageTitle>
+
+<div class="dashboard-header">
+    <h1 class="page-title">Welcome back!</h1>
+    <p class="page-subtitle">Here is your attendance summary for the current semester.</p>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading your dashboard..." />
+}
+else
+{
+    <div class="stats-grid">
+        <StatCard Title="Overall Attendance" Value="@($"{overallRate:F1}%")" Icon="📈"
+                  IconBgColor="rgba(76,175,125,0.1)" IconColor="var(--success)"
+                  Subtitle="Minimum required: 75%" SubtitleClass="@(overallRate >= 75 ? "text-success" : "text-danger")" />
+        <StatCard Title="Total Classes" Value="@totalLectures.ToString()" Icon="📚"
+                  IconBgColor="rgba(108,99,255,0.1)" IconColor="var(--accent)"
+                  Subtitle="Across all courses" SubtitleClass="text-muted" />
+        <StatCard Title="Attended" Value="@attended.ToString()" Icon="✅"
+                  IconBgColor="rgba(76,175,125,0.1)" IconColor="var(--success)"
+                  Subtitle="Present or late" SubtitleClass="text-success" />
+        <StatCard Title="Missed" Value="@(totalLectures - attended).ToString()" Icon="❌"
+                  IconBgColor="rgba(244,71,71,0.1)" IconColor="var(--danger)"
+                  Subtitle="Marked absent" SubtitleClass="text-danger" />
+    </div>
+
+    <h2 class="section-title">My Courses</h2>
+    <div class="courses-grid">
+        @foreach (var c in courses)
+        {
+            <div class="course-card">
+                <div class="course-header">
+                    <span class="course-code">@c.Code</span>
+                    <span class="att @(c.AttendanceRate >= 75 ? "good" : "warn")">@c.AttendanceRate%</span>
+                </div>
+                <h3 class="course-name">@c.Name</h3>
+                <p class="course-prof">👨‍🏫 @c.ProfessorName</p>
+                <div class="bar-track"><div class="bar-fill @(c.AttendanceRate >= 75 ? "good" : "warn")" style="width:@(c.AttendanceRate)%"></div></div>
+                <span class="course-footer">@c.AttendedLectures / @c.TotalLectures lectures</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    bool isLoading = true;
+    List<CourseDto> courses = new();
+    double overallRate; int totalLectures; int attended;
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await StudentService.GetStudentCoursesAsync();
+        totalLectures = courses.Sum(c => c.TotalLectures);
+        attended = courses.Sum(c => c.AttendedLectures);
+        overallRate = totalLectures > 0 ? (double)attended / totalLectures * 100 : 0;
+        isLoading = false;
+    }
+}

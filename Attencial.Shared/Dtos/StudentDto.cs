@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Attencial.Shared.Dtos
+namespace Attencial.Shared.Dtos;
+
+public class StudentDto
 {
-    internal class StudentDto
-    {
-    }
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public double AttendanceRate { get; set; }
+    public int EnrolledCoursesCount { get; set; }
 }

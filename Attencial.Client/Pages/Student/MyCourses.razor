@@ -1,0 +1,43 @@
+﻿@page "/student/courses"
+@attribute [Authorize(Roles = "Student")]
+@inject StudentService StudentService
+
+<PageTitle>My Courses – Attencial</PageTitle>
+
+<div class="hdr">
+    <h1 class="page-title">My Courses</h1>
+    <p class="page-subtitle">View your enrolled classes and professor info.</p>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading courses..." />
+}
+else
+{
+    <div class="list">
+        @foreach (var c in courses)
+        {
+            <div class="row">
+                <div class="info">
+                    <span class="code">@c.Code</span>
+                    <h3 class="name">@c.Name</h3>
+                    <span class="prof">👨‍🏫 @c.ProfessorName</span>
+                </div>
+                <div class="stats">
+                    <div><small>Attendance</small><strong class="@(c.AttendanceRate >= 75 ? "good" : "warn")">@c.AttendanceRate%</strong></div>
+                    <div><small>Lectures</small><span>@c.AttendedLectures / @c.TotalLectures</span></div>
+                </div>
+                <div class="prog">
+                    <div class="track"><div class="fill @(c.AttendanceRate >= 75 ? "good" : "warn")" style="width:@(c.AttendanceRate)%"></div></div>
+                    <span class="status @(c.AttendanceRate >= 75 ? "good" : "warn")">@(c.AttendanceRate >= 75 ? "✅ Safe" : "⚠️ Low")</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    bool isLoading = true; List<CourseDto> courses = new();
+    protected override async Task OnInitializedAsync() { courses = await StudentService.GetStudentCoursesAsync(); isLoading = false; }
+}

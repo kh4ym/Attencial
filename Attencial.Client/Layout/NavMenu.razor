@@ -1,33 +1,91 @@
-﻿@inject IJSRuntime JS
-@inject NavigationManager Nav
+﻿@inject NavigationManager Nav
+@inject AuthStateProvider AuthStateProvider
 
-<nav>
-    <a href="/">Home</a>
+<div class="nav-container">
 
-    @if (isLoggedIn)
-    {
-        <button @onclick="Logout">Logout</button>
-    }
-    else
-    {
-        <a href="/login">Login</a>
-    }
-</nav>
+    @* ── App Logo / Brand ── *@
+    <div class="nav-brand">
+        <span class="brand-icon">📋</span>
+        <span class="brand-name">Attencial</span>
+    </div>
+
+    @* ── Navigation Links (role-based) ── *@
+    <AuthorizeView>
+        <Authorized>
+            <nav class="nav-links">
+
+                @* ── STUDENT links ── *@
+                <AuthorizeView Roles="Student" Context="studentContext">
+                    <Authorized>
+                        <div class="nav-section-title">Student</div>
+                        <NavLink href="/student/dashboard" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">🏠</span> Dashboard
+                        </NavLink>
+                        <NavLink href="/student/attendance" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">📅</span> My Attendance
+                        </NavLink>
+                        <NavLink href="/student/courses" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">📚</span> My Courses
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+                @* ── PROFESSOR links ── *@
+                <AuthorizeView Roles="Professor" Context="professorContext">
+                    <Authorized>
+                        <div class="nav-section-title">Professor</div>
+                        <NavLink href="/professor/dashboard" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">🏠</span> Dashboard
+                        </NavLink>
+                        <NavLink href="/professor/mark-attendance" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">✅</span> Mark Attendance
+                        </NavLink>
+                        <NavLink href="/professor/classes" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">🎓</span> My Classes
+                        </NavLink>
+                        <NavLink href="/professor/reports" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">📊</span> Reports
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+                @* ── ADMIN links ── *@
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized>
+                        <div class="nav-section-title">Admin</div>
+                        <NavLink href="/admin/dashboard" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">🏠</span> Dashboard
+                        </NavLink>
+                        <NavLink href="/admin/users" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">👥</span> Manage Users
+                        </NavLink>
+                        <NavLink href="/admin/courses" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">📖</span> Manage Courses
+                        </NavLink>
+                        <NavLink href="/admin/reports" class="nav-item" ActiveClass="active">
+                            <span class="nav-icon">📊</span> System Reports
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+            </nav>
+
+            @* ── Logout Button at bottom ── *@
+            <div class="nav-footer">
+                <button class="logout-btn" @onclick="HandleLogout">
+                    <span class="nav-icon">🚪</span> Logout
+                </button>
+            </div>
+
+        </Authorized>
+    </AuthorizeView>
+
+</div>
 
 @code {
-    private bool isLoggedIn = false;
-
-    protected override async Task OnInitializedAsync()
+    private async Task HandleLogout()
     {
-        var token = await JS.InvokeAsync<string>(
-            "authStorage.getToken");
-        isLoggedIn = !string.IsNullOrEmpty(token);
-    }
-
-    private async Task Logout()
-    {
-        await JS.InvokeVoidAsync("authStorage.removeToken");
-        isLoggedIn = false;
+        await AuthStateProvider.NotifyUserLoggedOut();
         Nav.NavigateTo("/login");
     }
 }

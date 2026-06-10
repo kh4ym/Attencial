@@ -1,29 +1,67 @@
 ﻿@page "/login"
-@using Attencial.Shared.Dtos
-@inject HttpClient Http
-@inject IJSRuntime JS
+@layout Layout.MainLayout
+@inject AuthService AuthService
+@inject AuthStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
-<h3>Login</h3>
+<PageTitle>Login – Attencial</PageTitle>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="error">@errorMessage</div>
-}
+<div class="login-wrapper">
 
-<form @onsubmit="HandleLogin">
-    <div>
-        <label>Email</label>
-        <input type="email" @bind="email" />
+    <div class="login-card">
+
+        @* ── Logo ── *@
+        <div class="login-logo">
+            <span class="logo-icon">📋</span>
+            <h1 class="logo-text">Attencial</h1>
+            <p class="logo-sub">Attendance Management System</p>
+        </div>
+
+        @* ── Error Message ── *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert-error">
+                ⚠️ @errorMessage
+            </div>
+        }
+
+        @* ── Login Form ── *@
+        <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input class="form-input"
+                   type="email"
+                   placeholder="you@example.com"
+                   @bind="email"
+                   @bind:event="oninput" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input"
+                   type="password"
+                   placeholder="••••••••"
+                   @bind="password"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown" />
+        </div>
+
+        <button class="login-btn"
+                @onclick="HandleLogin"
+                disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner"></span>
+                <span>Signing in...</span>
+            }
+            else
+            {
+                <span>Sign In</span>
+            }
+        </button>
+
     </div>
-    <div>
-        <label>Password</label>
-        <input type="password" @bind="password" />
-    </div>
-    <button type="submit" disabled="@isLoading">
-        @(isLoading ? "Logging in..." : "Login")
-    </button>
-</form>
+
+</div>
 
 @code {
     private string email = string.Empty;
@@ -33,6 +71,13 @@
 
     private async Task HandleLogin()
     {
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Please enter your email and password.";
+            return;
+        }
+
         isLoading = true;
         errorMessage = string.Empty;
 
@@ -42,25 +87,35 @@
             Password = password
         };
 
-        var response = await Http.PostAsJsonAsync("api/auth/login", request);
+        var result = await AuthService.LoginAsync(request);
 
-        if (response.IsSuccessStatusCode)
+        if (result is null)
         {
-            var result = await response.Content
-                .ReadFromJsonAsync<ApiResponse<LoginResponse>>();
-
-            if (result?.Data?.Token is not null)
-            {
-                await JS.InvokeVoidAsync(
-                    "authStorage.setToken", result.Data.Token);
-                Nav.NavigateTo("/");
-            }
-        }
-        else
-        {
-            errorMessage = "Invalid email or password";
+            errorMessage = "Invalid email or password. Please try again.";
+            isLoading = false;
+            return;
         }
 
-        isLoading = false;
+        // Notify Blazor the user is now logged in
+        await AuthStateProvider.NotifyUserLoggedIn();
+
+        // Redirect to the correct dashboard based on role
+        var destination = result.Role switch
+        {
+            "Student" => "/student/dashboard",
+            "Professor" => "/professor/dashboard",
+            "Admin" => "/admin/dashboard",
+            _ => "/"
+        };
+
+        Nav.NavigateTo(destination);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleLogin();
+        }
     }
 }

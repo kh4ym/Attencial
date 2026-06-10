@@ -12,3 +12,7 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 
 await builder.Build().RunAsync();
+// 4. Register Dashboard Services
+builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<ProfessorService>();
+builder.Services.AddScoped<AdminService>();

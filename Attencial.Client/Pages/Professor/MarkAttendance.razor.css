@@ -1,0 +1,167 @@
+﻿.hdr {
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.form-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.row-inputs {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 220px;
+    flex: 1;
+}
+
+    .field label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+.inp {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+    .inp:focus {
+        border-color: var(--accent);
+        outline: none;
+    }
+
+.table-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.mark-all {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+    .btn-sm.good {
+        background: rgba(76,175,125,0.15);
+        color: var(--success);
+    }
+
+    .btn-sm.warn {
+        background: rgba(245,166,35,0.15);
+        color: var(--warning);
+    }
+
+    .btn-sm.bad {
+        background: rgba(244,71,71,0.15);
+        color: var(--danger);
+    }
+
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .tbl th {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: left;
+    }
+
+    .tbl td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+.inp-sm {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+}
+
+.submit-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn-accent:hover {
+        background: var(--accent-hover);
+    }
+
+    .btn-accent:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.msg {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+    .msg.success {
+        color: var(--success);
+    }
+
+    .msg.error {
+        color: var(--danger);
+    }

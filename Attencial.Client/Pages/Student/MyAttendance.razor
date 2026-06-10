@@ -1,0 +1,152 @@
+﻿@page "/student/attendance"
+@attribute [Authorize(Roles = "Student")]
+@inject StudentService StudentService
+
+<PageTitle>My Attendance – Attencial</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Attendance History</h1>
+        <p class="page-subtitle">View your daily logs and apply for leaves.</p>
+    </div>
+    <button class="btn-accent" @onclick="() => showModal = true">✏️ Apply for Leave</button>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner Message="Loading attendance records..." />
+}
+else
+{
+    <div class="tab-wrap">
+        <div class="tabs">
+            <button class="tab @(tab == "logs" ? "active" : "")" @onclick='() => tab = "logs"'>📋 Logs</button>
+            <button class="tab @(tab == "leaves" ? "active" : "")" @onclick='() => tab = "leaves"'>✉️ Leaves</button>
+        </div>
+
+        <div class="tab-body">
+            @if (tab == "logs")
+            {
+                <div class="filters">
+                    <select class="sel" @bind="filterCourse">
+                        <option value="0">All Courses</option>
+                        @foreach (var c in courses)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                    <select class="sel" @bind="filterStatus">
+                        <option value="All">All Statuses</option>
+                        <option value="Present">Present</option>
+                        <option value="Absent">Absent</option>
+                        <option value="Late">Late</option>
+                    </select>
+                </div>
+                <table class="tbl">
+                    <thead><tr><th>Date</th><th>Course</th><th>Status</th><th>Marked By</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in Filtered)
+                        {
+                            <tr>
+                                <td>@r.Date.ToShortDateString()</td>
+                                <td><strong>@r.CourseName</strong><br /><small>@r.CourseCode</small></td>
+                                <td><span class="badge @r.Status.ToLower()">@r.Status</span></td>
+                                <td>@r.MarkedBy</td>
+                            </tr>
+                        }
+                        @if (!Filtered.Any())
+                        {
+                            <tr><td colspan="4" class="empty">No records found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <table class="tbl">
+                    <thead><tr><th>Date</th><th>Course</th><th>Type</th><th>Reason</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach (var l in leaves)
+                        {
+                            <tr>
+                                <td>@l.Date.ToShortDateString()</td>
+                                <td>@l.CourseName</td>
+                                <td>@l.Type</td>
+                                <td>@l.Reason</td>
+                                <td><span class="badge @l.Status.ToLower()">@l.Status</span></td>
+                            </tr>
+                        }
+                        @if (!leaves.Any())
+                        {
+                            <tr><td colspan="5" class="empty">No leave requests.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
+
+@if (showModal)
+{
+    <div class="overlay">
+        <div class="modal">
+            <div class="modal-top"><h3>Apply for Leave</h3><button class="x" @onclick="() => showModal = false">✕</button></div>
+            <div class="modal-mid">
+                <label>Course</label>
+                <select class="inp" @bind="newLeave.CourseName">
+                    <option value="">-- Select --</option>
+                    @foreach (var c in courses)
+                    {
+                        <option value="@c.Name">@c.Name</option>
+                    }
+                </select>
+                <label>Date</label>
+                <input type="date" class="inp" @bind="newLeave.Date" />
+                <label>Type</label>
+                <select class="inp" @bind="newLeave.Type">
+                    <option value="Sick">Sick</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Event">Event</option>
+                </select>
+                <label>Reason</label>
+                <textarea class="inp" rows="3" @bind="newLeave.Reason"></textarea>
+                @if (!string.IsNullOrEmpty(err))
+                {
+                    <div class="err">⚠️ @err</div>
+                }
+            </div>
+            <div class="modal-bot">
+                <button class="btn-ghost" @onclick="() => showModal = false">Cancel</button>
+                <button class="btn-accent" @onclick="Submit">Submit</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    bool isLoading = true; string tab = "logs"; bool showModal;
+    List<CourseDto> courses = new(); List<AttendanceRecordDto> records = new(); List<LeaveRequestDto> leaves = new();
+    int filterCourse; string filterStatus = "All"; string err = "";
+    LeaveRequestDto newLeave = new() { Date = DateTime.Today, Type = "Sick" };
+
+    IEnumerable<AttendanceRecordDto> Filtered =>
+        records.Where(r => (filterCourse == 0 || r.CourseId == filterCourse) && (filterStatus == "All" || r.Status == filterStatus));
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await StudentService.GetStudentCoursesAsync();
+        records = await StudentService.GetStudentAttendanceAsync();
+        leaves = await StudentService.GetLeaveRequestsAsync();
+        isLoading = false;
+    }
+
+    async Task Submit()
+    {
+        if (string.IsNullOrEmpty(newLeave.CourseName)) { err = "Select a course."; return; }
+        if (string.IsNullOrWhiteSpace(newLeave.Reason)) { err = "Provide a reason."; return; }
+        await StudentService.SubmitLeaveRequestAsync(newLeave);
+        leaves = await StudentService.GetLeaveRequestsAsync();
+        showModal = false; newLeave = new() { Date = DateTime.Today, Type = "Sick" }; err = "";
+    }
+}

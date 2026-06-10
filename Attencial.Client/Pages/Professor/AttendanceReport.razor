@@ -1,0 +1,70 @@
+﻿@page "/professor/reports"
+@attribute [Authorize(Roles = "Professor")]
+@inject ProfessorService ProfessorService
+@inject NavigationManager Nav
+
+<PageTitle>Attendance Reports – Attencial</PageTitle>
+
+<div class="hdr">
+    <h1 class="page-title">Attendance Reports</h1>
+    <p class="page-subtitle">View submitted attendance records per class.</p>
+</div>
+
+<div class="sel-wrap">
+    <label>Select Class</label>
+    <select class="inp" @bind="selectedId" @bind:after="LoadReport">
+        <option value="0">-- Choose Class --</option>
+        @foreach (var c in classes)
+        {
+            <option value="@c.Id">@c.Name (@c.Code)</option>
+        }
+    </select>
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner />
+}
+else if (records.Any())
+{
+    <div class="tbl-wrap">
+        <table class="tbl">
+            <thead><tr><th>Date</th><th>Status</th><th>Marked By</th></tr></thead>
+            <tbody>
+                @foreach (var r in records)
+                {
+                    <tr>
+                        <td>@r.Date.ToShortDateString()</td>
+                        <td><span class="badge @r.Status.ToLower()">@r.Status</span></td>
+                        <td>@r.MarkedBy</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (selectedId > 0)
+{
+    <p class="empty">No attendance records found for this class yet.</p>
+}
+
+@code {
+    bool isLoading; int selectedId;
+    List<CourseDto> classes = new(); List<AttendanceRecordDto> records = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        classes = await ProfessorService.GetProfessorClassesAsync();
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("classId", out var val))
+        {
+            if (int.TryParse(val, out var id)) { selectedId = id; await LoadReport(); }
+        }
+    }
+
+    async Task LoadReport()
+    {
+        if (selectedId == 0) { records.Clear(); return; }
+        isLoading = true; records = await ProfessorService.GetAttendanceReportAsync(selectedId); isLoading = false;
+    }
+}

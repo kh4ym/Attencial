@@ -1,0 +1,15 @@
+﻿<div class="spinner-container @(FullScreen ? "full-screen" : "")">
+    <div class="double-bounce-spinner">
+        <div class="double-bounce1"></div>
+        <div class="double-bounce2"></div>
+    </div>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="loading-msg">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string Message { get; set; } = "Loading data...";
+    [Parameter] public bool FullScreen { get; set; } = false;
+}
