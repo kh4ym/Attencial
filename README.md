@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://attencial.live">🌐 Live Demo — attencial.live</a>
+  <a href="https://attencial.live">🌐 (deployment went down due to azure bills) Live Demo — attencial.live</a>
 </p>
 
 ---
